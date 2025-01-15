@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+    <html lang="en">
+
+        <head>
+            <title>Building Management - New Task</title>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+        </head>
+
+        <body>
+            <br><br>
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-head text-center">
+                                <a href="{% url 'task-dashboard' show=show %}"><-Back</a>&ensp;&ensp;&ensp; تفاصيل التذكرة
+                            </div>
+                            <div class="card-body">
+                                {% if tasklogs %}
+                                    {% for i in tasklogs %}
+                                        <p {% if i.is_close %} style="color: red;" {% endif %}>
+                                            <strong>{{i.user}} on {{i.added_at}}</strong><br>
+                                            {{i.note}}
+                                            <br>
+                                        </p>
+                                    {% endfor %}
+                                {% else %}
+                                    لايوجد أي تفاصيل للتذكرة
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% if taskobj.status == "Active" %}
+                        <div class="col-lg-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    {% if message %}
+                                        <div class="alert alert-danger" role="alert">
+                                            {{message}}
+                                        </div>
+                                    {% endif %}
+                                    <form method="post">{% csrf_token %}
+                                        {% if closure %}
+                                            <label>سبب إغلاق التذكرة</label>
+                                        {% else %}
+                                            <label>Updates</label>
+                                        {% endif %}
+                                        <textarea class="form-control" required name="note" required rows="8"></textarea><br>
+
+                                        <button class="btn btn-primary text-center" type="submit">
+                                            {% if closure %}
+                                                إغلاق التذكرة
+                                            {% else %}
+                                                إضافة تحديث
+                                            {% endif %}
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </body>
+    </html>

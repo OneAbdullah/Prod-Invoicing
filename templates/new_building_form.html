@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+    <html lang="en">
+
+        <head>
+            <title>Building Management - New Building</title>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+        </head>
+        
+        <body>
+            <br><br>
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-head text-center">
+                                <a href="{% url 'home' %}"><-Back</a>&ensp;&ensp;&ensp; إضافة عمارة
+                            </div>
+                            <div class="card-body">
+                                {% if message %}
+                                    <div class="alert alert-danger" role="alert">
+                                        {{message}}
+                                    </div>
+                                {% endif %}
+                                <form method="post">{% csrf_token %}
+                                    <input type="text" class="form-control" required name="name" placeholder="Enter The Name Of Building"><br>
+                                    <select class="form-control" required name="invoice-owner">
+                                        <option value="" selected disabled>-Select Invoice Owner-</option>
+                                        {% for i in objs %}
+                                            <option value="{{i.id}}">{{i.name}}</option>
+                                        {% endfor %}
+                                    </select><br>
+                                    <button class="btn btn-primary text-center" type="submit">
+                                        إضافة
+                                    </button>
+                                </form>
+                            </div>
+                            <div class="card-footer">
+                                <div class="row justify-content-end">
+                                    {% if request.user.is_superuser %}
+                                        <div class="col-lg-2">
+                                            <a href="/admin">
+                                                Admin
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                    <div class="col-lg-2">
+                                        <a href="{% url 'logout' %}">
+                                            تسجيل خروج
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </body>
+
+    
+    </html>

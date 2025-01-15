@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+    <html lang="en">
+
+        <head>
+            <title>Building Management - المهام</title>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        </head>
+        <style>
+    /* Page Background */
+    body {
+        background-color: #f7f7f7;
+        font-family: Arial, sans-serif;
+    }
+
+    /* Navbar Styling */
+    .navbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: #ffffff;
+        padding: 0.5rem 1rem;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+
+    .navbar-logo img {
+        width: 120px;
+    }
+
+    .navbar-search {
+        position: relative;
+        flex-grow: 1;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Input Field Styling */
+    .navbar-search input[type="text"] {
+        width: 100%;
+        padding: 0.5rem 2.5rem 0.5rem 0.5rem;
+        border-radius: 0.25rem;
+        border: 1px solid #ced4da;
+        transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        text-align: center;
+    }
+
+    .navbar-search input[type="text"]:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        outline: none;
+    }
+
+    .navbar-search button {
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: none;
+        background-color: transparent;
+        color: #007bff;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+
+    .navbar-search button:hover {
+        color: #0056b3;
+    }
+
+    .navbar-text {
+        font-weight: bold;
+        font-size: 1.1em;
+        white-space: nowrap;
+        margin-left: 1rem; /* Spacing between Task Dashboard and Arabic text */
+    }
+
+    .navbar-link {
+        font-size: 1.1em;
+        color: #007bff;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .navbar-link:hover {
+        text-decoration: underline;
+        color: #0056b3;
+    }
+</style>
+        <body>
+            <script>
+                /* function confirm_delete(a){
+                    if (confirm("Are you sure you want to delete this?")){
+                        window.location.href = a;
+                    }
+                } */
+                function handleSearch() {
+            const searchInput = document.getElementById('searchInput').value.trim();
+
+            if (!searchInput) {
+                alert("Please enter a search term.");
+                return false;
+            }
+
+            const firstChar = searchInput.charAt(0);
+
+            if (firstChar === '0' || firstChar === '5') {
+                document.getElementById('unified_search').action = "{% url 'search-apartment-by-phone' %}";
+            } else {
+                document.getElementById('unified_search').action = "{% url 'search-apartment-by-contract' %}";
+            }
+
+            return true;
+        }
+            </script>
+            <nav class="navbar">
+        <!-- Logo -->
+        <a class="navbar-logo" href="#">
+            <img src="https://i.postimg.cc/8CRg0V9j/logo-1.png" alt="Logo">
+        </a>
+
+        <!-- Centered search feature -->
+        <div class="navbar-search">
+            <form method="post" id="unified_search" onsubmit="return handleSearch()" action="#">
+                {% csrf_token %}
+                <input type="text" placeholder="إبحث برقم الجوال أو رقم العقد" name="searchInput" class="form-control" id="searchInput" required>
+                <button type="submit">
+                    <i class="fa fa-search"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Task Dashboard link and Arabic text -->
+        <div style="display: flex; align-items: center;">
+            <a href="/task-dashboard/1" class="navbar-link">قائمة المهام</a>
+            <!-- Arabic text on the far right -->
+        <a href="{% url 'home' %}" class="navbar-text">
+            مكتب محمد عبدالله السماعيل للعقارات
+        </a>
+        </div>
+    </nav>
+
+    <br>
+            <br><br>
+            <div class="container">
+                <div class="row">
+                    <div class="col-3">
+                        <button class="btn btn-primary" type="button" onclick="window.location.href='/'" style="width: 100%;">
+                            <- العودة
+                        </button>
+                        <br><br>
+                        <button class="btn btn-primary" type="button" onclick="window.location.href='/create-task'" style="width: 100%;">
+                            انشاء تذكرة جديدة
+                        </button>
+                        {% if show == 2 or show == 3 %}
+                            <br><br>
+                            <button class="btn btn-primary" type="button" onclick="window.location.href='/task-dashboard/1'" style="width: 100%;">
+                                التذاكر المفتوحة
+                            </button>
+                        {% endif %}
+                        {% if show == 1 or show == 3 %}
+                            <br><br>
+                            <button class="btn btn-primary" type="button" onclick="window.location.href='/task-dashboard/2'" style="width: 100%;">
+                                التذاكر المغلقة
+                            </button>
+                        {% endif %}
+                        {% if show == 1 or show == 2 %}
+                            <br><br>
+                            <button class="btn btn-primary" type="button" onclick="window.location.href='/task-dashboard/3'" style="width: 100%;">
+                                التذاكر التي قمت بإنشائها
+                            </button>
+                            <br><br>
+                            <div class="card text-center">
+                                <div class="card-head">
+                                    <strong>
+                                        Filters / Sort
+                                    </strong>
+                                </div>
+                                <div class="card-body">
+                                    <select class="form-control" id="priority" onchange="applyFilters();">
+                                        <option value="" selected>-Select Priority-</option>
+                                        <option value="P1">P1</option>
+                                        <option value="P2">P2</option>
+                                        <option value="P3">P3</option>
+                                    </select><br>
+
+                                    <select class="form-control" id="dt" onchange="applySort();">
+                                        <option value="" selected disabled>-Sort by {% if show == 1 %}Deadline{% else %}Completion{% endif %}-</option>
+                                        <option value="as">Latest First</option>
+                                        <option value="ds">Latest Last</option>
+                                    </select><br>
+
+                                    <button class="btn btn-primary" type="button" id="reset" onclick="window.location.href=window.location.href;">
+                                        إعادة تعيين
+                                    </button>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <script>
+                        function applyFilters(){
+                            pri = document.getElementById("priority").value;
+                            eles = document.getElementsByClassName("task-elements");
+                            if (pri){
+                                for (i = 0 ; i < eles.length ; i++){
+                                    if (eles[i].getAttribute("name") == pri){
+                                        eles[i].hidden = false;
+                                    }
+                                    else{
+                                        eles[i].hidden = true;
+                                    }
+                                }
+                            }
+                            else{
+                                for (i = 0 ; i < eles.length ; i++){
+                                    eles[i].hidden = false;
+                                }
+                            }
+                        }
+
+                        function applySort(){
+                            sort = document.getElementById("dt").value;
+                            if (sort){
+                                eles = document.getElementsByClassName("task-elements");
+                                items = [];
+                                for (i = 0 ; i < eles.length ; i++){
+                                    items.push({
+                                        item:eles[i], datetime:eles[i].getAttribute("data-datetime").replace(" ","T")
+                                    });
+                                }
+                                n = items.length;
+                                for (i = 0; i < n - 1; i++) {
+                                    swapped = false;
+                                    for (j = 0; j < n - i - 1; j++) {
+                                        if (sort == "ds"){
+                                            if (new Date(items[j].datetime) < new Date(items[j + 1].datetime)) {
+                                                tempele = items[j].item;
+                                                tempdt = items[j].datetime;
+                                                items[j].item = items[j + 1].item;
+                                                items[j].datetime = items[j + 1].datetime;
+                                                items[j + 1].item = tempele;
+                                                items[j + 1].datetime = tempdt;
+                                                swapped = true;
+                                            }
+                                        }
+                                        if (sort == "as"){
+                                            if (new Date(items[j].datetime) > new Date(items[j + 1].datetime)) {
+                                                tempele = items[j].item;
+                                                tempdt = items[j].datetime;
+                                                items[j].item = items[j + 1].item;
+                                                items[j].datetime = items[j + 1].datetime;
+                                                items[j + 1].item = tempele;
+                                                items[j + 1].datetime = tempdt;
+                                                swapped = true;
+                                            }
+                                        }
+                                    }
+                                    if (!swapped){
+                                        break;
+                                    }
+                                }
+                                taskcont = document.getElementById("tasks-container");
+                                taskcont.innerHTML = "";
+                                temp = "";
+                                for (i = 0 ; i < items.length ; i++){
+                                    temp = temp + items[i].item.outerHTML;
+                                }
+                                taskcont.innerHTML = temp;
+                                applyFilters();
+                            }
+                        }
+                    </script>
+                    <div class="col-9">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card border-0">
+                                    <div class="card-head text-center">
+                                        {% if show == 1 %}تذاكري المفتوحة{% endif %}
+                                        {% if show == 2 %}تذاكري المغلقة{% endif %}
+                                        {% if show == 3 %}التذاكر التي قمت بإنشائها{% endif %}
+                                        <hr>
+                                    </div>
+                                    <div class="card-body" id="tasks-container">
+                                        {% for i in tasks %}
+                                            <div name="{{i.priority}}" class="task-elements" {% if show == 1 %} data-datetime='{{i.deadline|date:"Y-m-d 00:00:00"}}' {% else %} data-datetime='{{i.last_updated_at|date:"Y-m-d H:i:s"}}' {% endif %}>
+                                                <div class="card" style="border-width: 3px; border-color: lightgreen; padding: 4px;">
+                                                    <div class="row">
+                                                        <div class="col-6">
+                                                            <strong>رقم التذكرة</strong>  -  {{i.id}} <br>
+                                                            <strong>مسندة إلى</strong>  -  {{i.assigned}} <br>
+                                                            <strong>الحالة</strong>  -  {{i.status}} {% if i.status == "Closed" %} on {{i.last_updated_at}} {% endif %} <br>
+                                                            <strong>الاولوية</strong>  -  {{i.priority}} <br>
+                                                            <strong>أخر تحديث</strong>  -  {{i.get_latest_update}}
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <strong>{% if show == 1 %} data-datetime='{{i.deadline|date:"Y-m-d 00:00:00"}}' {% else %} التاريخ'{{i.last_updated_at|date:"Y-m-d H:i:s"}}' {% endif %}</strong>
+                                                            <br><strong>تفاصيل التذكرة</strong>  -  {{i.desc}}
+                                                        </div>
+                                                        <div class="col-12">
+                                                            <hr style="border-color: lightgreen; width: 80%;">
+                                                            <div class="row">
+                                                                <div class="col-4">
+                                                                    <button class="btn btn-primary" type="button" onclick="window.location.href='/task-detail/{{i.id}}/{{show}}'" style="width: 100%;">
+                                                                        التفاصيل
+                                                                    </button>
+                                                                </div>
+                                                                {% if i.status == "Active" %}
+                                                                    <div class="col-4">
+
+                                                                    </div>
+                                                                    <div class="col-4">
+                                                                        <button class="btn btn-primary" type="button" onclick="window.location.href='/task-close/{{i.id}}/{{show}}'" style="width: 100%;">
+                                                                            إغلاق التذكرة
+                                                                        </button>
+                                                                    </div>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div><br>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </body>
+    </html>

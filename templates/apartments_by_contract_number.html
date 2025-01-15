@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+    <html lang="en">
+
+        <head>
+            <title>Building Management - Apartments</title>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"> 
+        </head>
+        
+        <body>
+            <script>
+                function confirm_delete(a){
+                    if (confirm("Are you sure you want to delete this?")){
+                        window.location.href = a;
+                    }
+                }
+            </script>
+            <br><br>
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-9">
+                        <div class="card">
+                            <div class="card-head text-center">
+                                <a href="{% url 'home' %}"><-Back</a>&ensp;&ensp;&ensp; Search Result
+                            </div>
+                            <div class="card-body">
+                                {% if objs %}
+                                    {% for i in objs %}
+                                    <div>
+                                        <div class="col-lg-7">
+                                            {% if type_of_user %}
+                                                <a onclick="confirm_delete('{% url 'delete-apartment' i.id %}')" title="Delete">
+                                                    <span class="fa text-danger fa-lg fa-remove"></span>
+                                                </a>
+                                            {% endif %}
+                                            <a href="{% url 'invoices' i.id %}">
+                                                {{i.getDisplayName}} : {{i.aprt_number}}  -  {{i.name}}
+                                            </a>&ensp;-&ensp;
+                                            <a href="{% url 'maintenance-invoices' i.id %}">
+                                                Maintenance Invoices
+                                            </a>
+                                        </div>
+                                        <div class="col-lg-3">
+                                            <span class="to-date" style="display: none;">
+                                                {{i.getLastToDate}}
+                                            </span>
+                                        </div>
+                                        <div class="col-lg-1" style="background-color: {{i.getShowColor}} ; padding: 10px; border: 1px solid white;">
+
+                                        </div>
+                                        <div class="col-lg-1">
+                                            
+                                        </div>
+                                    </div>
+                                    <hr class="abcd {{i.getShowColor}}">
+                                    {% endfor %}
+                                {% else %}
+                                    <a>No Apartment Found With Given Contract Number.</a>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer">
+                                <div class="row justify-content-around">
+                                    <div class="col-lg-8">
+                                        
+                                    </div>
+                                    {% if request.user.is_superuser %}
+                                        <div class="col-lg-2">
+                                            <a href="/admin">
+                                                Admin
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                    <div class="col-lg-2">
+                                        <a href="{% url 'logout' %}">
+                                            Logout
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </body>
+
+    
+    </html>

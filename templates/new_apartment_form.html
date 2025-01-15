@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+    <html lang="en">
+
+        <head>
+            <title>إضافة شقة</title>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+        </head>
+
+        <body>
+            <br><br>
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-head text-center">
+                                <a href="{% url 'apartments' id %}"><-Back</a>&ensp;&ensp;&ensp; إضافة شقة جديدة
+                            </div>
+                            <div class="card-body">
+                                {% if message %}
+                                    <div class="alert alert-danger" role="alert">
+                                        {{message}}
+                                    </div>
+                                {% endif %}
+                                <form method="post">{% csrf_token %}
+                                    <input type="number" class="form-control" required name="num" placeholder="رقم الشقة" {% if aobj %} value="{{aobj.aprt_number}}" readonly {% endif %}><br>
+                                    <input type="text" class="form-control" required name="name" placeholder="اسم المستأجر"><br>
+                                    <input type="number" class="form-control" required name="phone" placeholder="رقم الجوال"><br>
+                                    <select class="form-control" required name="type_of">
+                                        <option selected disabled>-Select Type-</option>
+                                        <option value="Apartment"> شقة</option>
+                                        <option value="Home"> غرفة</option>
+                                        <option value="Floor"> دور</option>
+                                        <option value="Store"> محل</option>
+                                        <option value="Studio"> ملحق</option>
+                                    </select><br>
+                                    <label>تاريخ انتهاء العقد</label><br>
+                                    <input type="date" class="form-control" required name="dob" placeholder="Enter Date Of Birth"><br>
+                                    <input type="number" class="form-control" required name="cnum" placeholder="رقم العقد"><br>
+                                    <input type="number" class="form-control" required name="enum" placeholder="رقم حساب الكهرباء"><br>
+                                    <input type="number" class="form-control" required name="rent" placeholder="Enter Annual Rent"><br>
+                                    <select class="form-control" required name="payment_method">
+                                        <option selected disabled>-Select Payment Method-</option>
+                                        <option value="1">شهريا</option>
+                                        <option value="2">كل ثالث شهور</option>
+                                        <option value="3">كل ست شهور</option>
+                                        <option value="4">سنوي</option>
+                                    </select><br>
+                                    <label>Comments</label>
+                                    <textarea class="form-control" required name="note"></textarea><br>
+                                    <button class="btn btn-primary text-center" type="submit">
+                                        إضافة
+                                    </button>
+                                </form>
+                            </div>
+                            <div class="card-footer">
+                                <div class="row justify-content-end">
+                                    {% if request.user.is_superuser %}
+                                        <div class="col-lg-2">
+                                            <a href="/admin">
+                                                Admin
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                    <div class="col-lg-2">
+                                        <a href="{% url 'logout' %}">
+                                            تسجيل خروج
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </body>
+
+
+    </html>

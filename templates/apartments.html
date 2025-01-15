@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+    <html lang="en">
+
+        <head>
+            <title>الشقق</title>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        </head>
+     <style>
+    /* Page Background */
+    body {
+        background-color: #f7f7f7;
+        font-family: Arial, sans-serif;
+    }
+
+    /* Navbar Styling */
+    .navbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: #ffffff;
+        padding: 0.5rem 1rem;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+
+    .navbar-logo img {
+        width: 120px;
+    }
+
+    .navbar-search {
+        position: relative;
+        flex-grow: 1;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Input Field Styling */
+    .navbar-search input[type="text"] {
+        width: 100%;
+        padding: 0.5rem 2.5rem 0.5rem 0.5rem;
+        border-radius: 0.25rem;
+        border: 1px solid #ced4da;
+        transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        text-align: center;
+    }
+
+    .navbar-search input[type="text"]:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        outline: none;
+    }
+
+    .navbar-search button {
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: none;
+        background-color: transparent;
+        color: #007bff;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+
+    .navbar-search button:hover {
+        color: #0056b3;
+    }
+
+    .navbar-text {
+        font-weight: bold;
+        font-size: 1.1em;
+        white-space: nowrap;
+        margin-left: 1rem; /* Spacing between Task Dashboard and Arabic text */
+    }
+
+    .navbar-link {
+        font-size: 1.1em;
+        color: #007bff;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .navbar-link:hover {
+        text-decoration: underline;
+        color: #0056b3;
+    }
+</style>
+        <body>
+            <script>
+                function confirm_delete(a){
+                    if (confirm("Are you sure you want to delete this?")){
+                        window.location.href = a;
+                    }
+                }
+                function handleSearch() {
+            const searchInput = document.getElementById('searchInput').value.trim();
+
+            if (!searchInput) {
+                alert("Please enter a search term.");
+                return false;
+            }
+
+            const firstChar = searchInput.charAt(0);
+
+            if (firstChar === '0' || firstChar === '5') {
+                document.getElementById('unified_search').action = "{% url 'search-apartment-by-phone' %}";
+            } else {
+                document.getElementById('unified_search').action = "{% url 'search-apartment-by-contract' %}";
+            }
+
+            return true;
+        }
+            </script>
+            <nav class="navbar">
+        <!-- Logo -->
+        <a class="navbar-logo" href="#">
+            <img src="https://i.postimg.cc/8CRg0V9j/logo-1.png" alt="Logo">
+        </a>
+
+        <!-- Centered search feature -->
+        <div class="navbar-search">
+            <form method="post" id="unified_search" onsubmit="return handleSearch()" action="#">
+                {% csrf_token %}
+                <input type="text" placeholder="إبحث برقم الجوال أو رقم العقد" name="searchInput" class="form-control" id="searchInput" required>
+                <button type="submit">
+                    <i class="fa fa-search"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Task Dashboard link and Arabic text -->
+        <div style="display: flex; align-items: center;">
+            <a href="/task-dashboard/1" class="navbar-link">قائمة المهام</a>
+            <!-- Arabic text on the far right -->
+        <a href="{% url 'home' %}" class="navbar-text">
+            مكتب محمد عبدالله السماعيل للعقارات
+        </a>
+        </div>
+    </nav>
+
+    <br>
+            <br><br>
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-3">
+                        <div class="card">
+                            <div class="card-head text-center">
+                                تفاصيل العمارة
+                            </div>
+                            <div class="card-body">
+                                {% if message %}
+                                    <div class="alert alert-danger" role="alert">
+                                        {{message}}
+                                    </div>
+                                {% endif %}
+                                <form method="post">{% csrf_token %}
+                                    <input type="text" class="form-control" required name="name" placeholder="Enter The Name Of Building" value="{{bobj.name}}"
+                                    {% if not type_of_user %}readonly{% endif %} ><br>
+                                    <select class="form-control" required name="invoice-owner" {% if not type_of_user %}readonly{% endif %}>
+                                        <option value="" disabled>-Select Invoice Owner-</option>
+                                        {% for i in owners %}
+                                            <option value="{{i.id}}" {% if bobj.owner.id == i.id %} selected {% endif %} >{{i.name}}</option>
+                                        {% endfor %}
+                                    </select><br>
+                                    {% if type_of_user %}
+                                        <button class="btn btn-primary text-center" type="submit">
+                                            حفظ التغيررات
+                                        </button>
+                                    {% endif %}
+                                </form>
+                            </div>
+                            <div class="card-footer">
+                                <br><br>
+                                Showing Color Tags : <select class="form-control" id="color-tag-filter" onchange="showColorApartments(this.value)">
+                                    <option>All</option>
+                                    <option value="green">Green</option>
+                                    <option value="yellow">Yellow</option>
+                                    <option value="red">Red</option>
+                                    <option value="black">Black</option>
+                                </select>
+                                <br>
+                                Showing Payment Methods : <select class="form-control" id="payment-method-filter" onchange="showPaymentMethodApartments(this.value)">
+                                    <option>All</option>
+                                    <option value="1">شهريا</option>
+                                    <option value="2">كل ثالث شهور</option>
+                                    <option value="3">كل ست شهور</option>
+                                    <option value="4">سنوي</option>
+                                </select>
+                                <br>
+                                <button class="btn btn-primary" onclick="showToDates();">
+                                    Show To Dates
+                                </button>
+                                <br>
+                                <script>
+                                    tempToDate = true;
+                                    function showColorApartments(a){
+                                        count = 0;
+                                        if (a == "All"){
+                                            ob = document.getElementsByClassName("abcd");
+                                            for (i=0 ; i <ob.length ; i++){
+                                                ob[i].hidden = false;
+                                            }
+                                        }
+                                        else{
+                                            document.getElementById('payment-method-filter').value="All";
+                                            showPaymentMethodApartments("All");
+                                            ob = document.getElementsByClassName("abcd");
+                                            for (i=0 ; i <ob.length ; i++){
+                                                if (ob[i].getAttribute("class") == "abcd "+a || ob[i].getAttribute("class") == "row abcd "+a){
+                                                    count++;
+                                                    ob[i].hidden = false;
+                                                }
+                                                else{
+                                                    ob[i].hidden = true;
+                                                }
+                                            }
+                                            if (count == 0){
+                                                alert("No Apartment has that tag!");
+                                            }
+                                        }
+                                    }
+                                    function showPaymentMethodApartments(a){
+                                        count = 0;
+                                        if (a == "All"){
+                                            ob = document.getElementsByClassName("abcd");
+                                            for (i=0 ; i <ob.length ; i++){
+                                                ob[i].hidden = false;
+                                            }
+                                        }
+                                        else{
+                                            document.getElementById('color-tag-filter').value="All";
+                                            showColorApartments("All");
+                                            ob = document.getElementsByClassName("abcd");
+                                            for (i=0 ; i <ob.length ; i++){
+                                                temp_id = "-"+a;
+                                                if (ob[i].getAttribute("id").includes(temp_id)){
+                                                    count++;
+                                                    ob[i].hidden = false;
+                                                }
+                                                else{
+                                                    ob[i].hidden = true;
+                                                }
+                                            }
+                                            if (count == 0){
+                                                alert("No Apartment has that tag!");
+                                            }
+                                        }
+                                    }
+                                    function showToDates(){
+                                        temp1 = document.getElementsByClassName('to-date');
+
+                                        if (tempToDate){
+                                            for (i = 0 ; i < temp1.length ; i++){
+                                                temp1[i].setAttribute('style','display:block;');
+                                            }
+                                            tempToDate = false;
+                                        }
+                                        else{
+                                            for (i = 0 ; i < temp1.length ; i++){
+                                                temp1[i].setAttribute('style','display:none;');
+                                            }
+                                            tempToDate = true;
+                                        }
+                                    }
+                                </script>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-9">
+                        <div class="card">
+                            <div class="card-head text-center">
+                                <a href="{% url 'home' %}"><-Back</a>&ensp;&ensp;&ensp; عمارة - {{bobj.name}}
+                            </div>
+                            <div class="card-body">
+                                {% if objs %}
+                                    {% for i in objs %}
+                                    <div class="row abcd {{i.getShowColor}}" id="{{forloop.counter}}-{{i.payment_method}}">
+                                        <div class="col-lg-7">
+                                            {% if type_of_user %}
+                                                <a onclick="confirm_delete('{% url 'delete-apartment' i.id %}')" title="Delete">
+                                                    <span class="fa text-danger fa-lg fa-remove"></span>
+                                                </a>
+                                            {% endif %}
+                                            <a href="{% url 'invoices' i.id %}">
+                                                {{i.getDisplayName}} : {{i.aprt_number}}  -  {{i.name}}
+                                            </a>&ensp;-&ensp;
+                                            <a href="{% url 'maintenance-invoices' i.id %}">
+                                                سجل الصيانة
+                                            </a>
+                                        </div>
+                                        <div class="col-lg-3">
+                                            <span class="to-date" style="display: none;">
+                                                {{i.getLastToDate}}
+                                            </span>
+                                        </div>
+                                        <div class="col-lg-1" style="background-color: {{i.getShowColor}} ; padding: 10px; border: 1px solid white;">
+
+                                        </div>
+                                        <div class="col-lg-1">
+                                            <a href="{% url 'move-up-apartment' bobj.id i.id %}" style="color: black;">
+                                                <span class="fa fa-arrow-up"></span>
+                                            </a>
+                                            <a href="{% url 'move-down-apartment' bobj.id i.id %}" style="color: black;">
+                                                <span class="fa fa-arrow-down"></span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <hr class="abcd {{i.getShowColor}}" id="{{forloop.counter}}pay-{{i.payment_method}}">
+                                    {% endfor %}
+                                {% else %}
+                                    <a>العمارة لايوجد بها شقق , قم بإضافة الشقق</a>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer">
+                                <div class="row justify-content-around">
+                                    <div class="col-lg-8">
+                                        {% if type_of_user %}
+                                            <button class="btn btn-primary" type="button" onclick="window.location.href='/new-apartment-form/{{bobj.id}}/x'">
+                                                إضافة شقة
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                    {% if request.user.is_superuser %}
+                                        <div class="col-lg-2">
+                                            <a href="/admin">
+                                                Admin
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                    <div class="col-lg-2">
+                                        <a href="{% url 'logout' %}">
+                                            تسجيل الخروج
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% if del_objs %}
+                        <br><br>
+                        <div class="card">
+                            <div class="card-head text-center">
+                                <h5>الشقق التي تم حذفها مؤخرا</h5>
+                            </div>
+                            <div class="card-body">
+                                {% for i in del_objs %}
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <a href="#">
+                                            شقة : {{i.aprt_number}}  -  {{i.name}}
+                                        </a>&ensp;-&ensp;
+                                        <a href="{% url 'delete-apartment' i.id %}">
+                                            إستعادة الشقة
+                                        </a>
+                                    </div>
+                                </div>
+                                <hr>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </body>
+
+
+    </html>

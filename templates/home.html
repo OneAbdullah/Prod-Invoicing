@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+    <html lang="en">
+
+        <head>
+            <title>الصفحة الرئيسية</title>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        </head>
+      <style>
+    /* Page Background */
+    body {
+        background-color: #f7f7f7;
+        font-family: Arial, sans-serif;
+    }
+
+    /* Navbar Styling */
+    .navbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: #ffffff;
+        padding: 0.5rem 1rem;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+
+    .navbar-logo img {
+        width: 120px;
+    }
+
+    .navbar-search {
+        position: relative;
+        flex-grow: 1;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Input Field Styling */
+    .navbar-search input[type="text"] {
+        width: 100%;
+        padding: 0.5rem 2.5rem 0.5rem 0.5rem;
+        border-radius: 0.25rem;
+        border: 1px solid #ced4da;
+        transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        text-align: center;
+    }
+
+    .navbar-search input[type="text"]:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        outline: none;
+    }
+
+    .navbar-search button {
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: none;
+        background-color: transparent;
+        color: #007bff;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+
+    .navbar-search button:hover {
+        color: #0056b3;
+    }
+
+    .navbar-text {
+        font-weight: bold;
+        font-size: 1.1em;
+        white-space: nowrap;
+        margin-left: 1rem; /* Spacing between Task Dashboard and Arabic text */
+    }
+
+    .navbar-link {
+        font-size: 1.1em;
+        color: #007bff;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .navbar-link:hover {
+        text-decoration: underline;
+        color: #0056b3;
+    }
+</style>
+
+        <body>
+            <script>
+                function confirm_delete(a){
+                    if (confirm("Are you sure you want to delete this?")){
+                        window.location.href = a;
+                    }
+                }
+                function handleSearch() {
+            const searchInput = document.getElementById('searchInput').value.trim();
+
+            if (!searchInput) {
+                alert("Please enter a search term.");
+                return false;
+            }
+
+            const firstChar = searchInput.charAt(0);
+
+            if (firstChar === '0' || firstChar === '5') {
+                document.getElementById('unified_search').action = "{% url 'search-apartment-by-phone' %}";
+            } else {
+                document.getElementById('unified_search').action = "{% url 'search-apartment-by-contract' %}";
+            }
+
+            return true;
+        }
+            </script>
+        <nav class="navbar">
+        <!-- Logo -->
+        <a class="navbar-logo" href="#">
+            <img src="https://i.postimg.cc/8CRg0V9j/logo-1.png" alt="Logo">
+        </a>
+
+        <!-- Centered search feature -->
+        <div class="navbar-search">
+            <form method="post" id="unified_search" onsubmit="return handleSearch()" action="#">
+                {% csrf_token %}
+                <input type="text" placeholder="إبحث برقم الجوال أو رقم العقد" name="searchInput" class="form-control" id="searchInput" required>
+                <button type="submit">
+                    <i class="fa fa-search"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Task Dashboard link and Arabic text -->
+        <div style="display: flex; align-items: center;">
+            <a href="/task-dashboard/1" class="navbar-link">قائمة المهام</a>
+            <span class="navbar-text">
+                مكتب محمد عبدالله السماعيل للعقارات
+            </span>
+        </div>
+    </nav>
+
+    <br>
+
+            <div class="modal" tabindex="-1" role="dialog">
+                <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">إختر فترة التقرير(كحد إقصى 31 يوما)</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('.modal').toggle('modal');">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                      <form method="post" id="report-form">{% csrf_token %}
+                        من تاريخ : <input type="date" class="form-control" name="from-date" id="date1"><br>
+                        إلى تاريخ : <input type="date" class="form-control" name="to-date" id="date2"><br>
+                      </form>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-primary" form="report-form" onclick="validateSubmit(this);">Show Report</button>
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="$('.modal').toggle('modal');">Close</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <br><br>
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-3">
+                        <div class="card">
+                            <div class="card-head text-center">
+                                السندات <select class="form-control" id="owners-invoice" onchange="show_download_report_button();filterBuildings(this.value)">
+                                    <option value="x">All</option>
+                                    {% for i in owners %}
+                                        <option value="{{i.id}}">{{i.name}}</option>
+                                    {% endfor %}
+                                </select><br>
+                                <button class="btn btn-primary" onclick="redirectToInvoices();">
+                                    السندات
+                                </button><br><br>
+                                <button class="btn btn-primary" onclick="redirectToMainInvoices();">
+                                    سجل الصيانة
+                                </button><br><br>
+                                <button class="btn btn-primary" onclick="redirectToReports();" id="show-report-btn" style="display: none;">
+                                    تحميل التقرير
+                                </button><br><br>
+                                <script>
+                                    function redirectToInvoices(){
+                                        window.location.href = "/owner-invoices/"+document.getElementById("owners-invoice").value;
+                                    }
+                                    function redirectToMainInvoices(){
+                                        window.location.href = "/owner-maintenance-invoices/"+document.getElementById("owners-invoice").value;
+                                    }
+                                    function redirectToReports(){
+                                        document.getElementById('report-form').setAttribute("action","/owner-report/"+document.getElementById("owners-invoice").value);
+                                        $('.modal').toggle("modal");
+                                        return;
+                                        //window.location.href = "/owner-report/"+document.getElementById("owners-invoice").value;
+                                    }
+                                    function show_download_report_button(){
+                                        if (document.getElementById("owners-invoice").value != 'x'){
+                                            document.getElementById('show-report-btn').style = "";
+                                        }
+                                        else{
+                                            document.getElementById('show-report-btn').style = "display:none;";
+                                        }
+                                    }
+                                    function validateSubmit(obj){
+                                        a = document.getElementById('date1').value;
+                                        b = document.getElementById('date2').value;
+                                        if (a){
+                                            if (b){
+                                                a = new Date(a);
+                                                b = new Date(b);
+                                                diff = b - a;
+                                                diff = diff / (1000 * 60 * 60 * 24);
+                                                diff = diff + 1;
+                                                if (diff > 31){
+                                                    window.alert("لايمكن طباعة تقرير لفترة أكثر من 31 يوما");
+                                                }
+                                                else{
+                                                    $.get('/check-download-allowed/'+document.getElementById("owners-invoice").value , function (data){
+                                                        if (data['check']){
+                                                            obj.form.submit();
+                                                        }
+                                                        else{
+                                                            window.alert("Action is not allowed");
+                                                        }
+                                                    });
+                                                }
+                                            }
+                                            else{
+                                                window.alert("Please select to date!");
+                                            }
+                                        }
+                                        else{
+                                            window.alert("Please select from date!");
+                                        }
+
+                                    }
+                                    function filterBuildings(a){
+                                        if (a == 'x'){
+                                            temp = document.getElementsByClassName("abcd");
+                                            for (i=0 ; i<temp.length ; i++){
+                                                temp[i].style = "display:block;";
+                                            }
+                                        }
+                                        else{
+                                            temp = document.getElementsByClassName("abcd");
+                                            for (i=0 ; i<temp.length ; i++){
+                                                temp[i].style = "display:none;";
+                                            }
+
+                                            temp = document.getElementsByClassName("abcd "+a);
+                                            if (temp.length == 0){
+                                                window.alert("No buildings available for this Owner");
+                                            }
+                                            else{
+                                                for (i=0 ; i<temp.length ; i++){
+                                                    temp[i].style = "display:block;";
+                                                }
+                                            }
+                                        }
+                                    }
+                                </script>
+                            </div>
+                        </div>
+                        <br>
+                         <!--<div class="card">
+                            <div class="card-head text-center">
+                                Search By Phone Number :
+                                <br>
+                                <form style="display: none;" method="post" id="phone_search" action="{% url 'search-apartment-by-phone' %}">{% csrf_token %}</form>
+                                <input type="text" placeholder="Phone Number" form="phone_search" name="pnum" class="form-control" required>
+                                <br>
+                                <button class="btn btn-primary" form="phone_search" type="submit">
+                                    Search
+                                </button><br><br>
+                            </div>
+                        </div>-->
+                        <br>
+                       <!--<div class="card">
+                            <div class="card-head text-center">
+                                Search By Contract Number :
+                                <br>
+                                <form style="display: none;" method="post" id="contract_search" action="{% url 'search-apartment-by-contract' %}">{% csrf_token %}</form>
+                                <input type="text" placeholder="Contract Number" form="contract_search" name="cnum" class="form-control" required>
+                                <br>
+                                <button class="btn btn-primary" form="contract_search" type="submit">
+                                    Search
+                                </button><br><br>
+                            </div>
+                        </div> -->
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-head text-center">
+                                العماير
+                            </div>
+                            <div class="card-body">
+                                {% if objs %}
+                                    {% for i in objs %}
+                                        <div class="abcd {{i.owner.id}}">
+                                            {% if type_of_user %}
+                                                {% if request.user.is_superuser %}
+                                                    {% if i.apartment_count %}
+                                                        <a onclick="confirm_delete('{% url 'delete-building' i.id %}')" title="Delete"><span class="fa text-danger fa-lg fa-remove"></span></a>
+                                                    {% endif %}
+                                                {% endif %}
+                                            {% endif %}
+                                            <a href="{% url 'apartments' i.id %}">
+                                               عمارة {{i.name}}   - لــ : {{i.owner}}
+                                            </a><br><hr><br>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <a>You Have No Buildings To Manage Right Now.</a>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer">
+                                {% if request.user.is_superuser %}
+                                <div class="row justify-content-around">
+                                    <div class="col-lg-6">
+                                        <a href="{% url 'deleted-invoices' %}">
+                                            Deleted Invoices
+                                        </a>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <a href="{% url 'deleted-maintenance-invoices' %}">
+                                            Deleted Maintenance Invoices
+                                        </a>
+                                    </div>
+                                </div>
+                                <br>
+                                {% endif %}
+                                <div class="row justify-content-around">
+                                    <div class="col-lg-8">
+                                        {% if type_of_user %}
+                                            <button class="btn btn-primary" type="button" onclick="window.location.href='/new-building-form'">
+                                                إضافة عمارة جديدة
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                    {% if request.user.is_superuser %}
+                                        <div class="col-lg-2">
+                                            <a href="/admin">
+                                                Admin
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                    <div class="col-lg-2">
+                                        <a href="{% url 'logout' %}">
+                                            تسجيل خروج
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </body>
+
+
+    </html>

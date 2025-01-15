@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+    <html lang="en">
+
+        <head>
+            <title>Building Management - New Invoice</title>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+            <script>
+                function changeFormBasedOnOption(a){
+                    if (a == "Transfer"){
+                        document.getElementById("bank").hidden = false;
+                        document.getElementById("bank").setAttribute("required","required");
+                        document.getElementById("transDate").hidden = false;
+                        document.getElementById("transDate").setAttribute("required","required");
+                        document.getElementById("b1").hidden = false;
+                        document.getElementById("b2").hidden = false;
+                        document.getElementById("b3").hidden = false;
+                        document.getElementById("b4").hidden = false;
+
+                    }
+                    else{
+                        document.getElementById("bank").hidden = true;
+                        document.getElementById("bank").removeAttribute("required");
+                        document.getElementById("transDate").hidden = true;
+                        document.getElementById("transDate").removeAttribute("required");
+                        document.getElementById("b1").hidden = true;
+                        document.getElementById("b2").hidden = true;
+                        document.getElementById("b3").hidden = true;
+                        document.getElementById("b4").hidden = true;
+                    }
+                }
+                function changeFormBasedOnType(a){
+                    if (a == "Other"){
+                        document.getElementById("pay-other").hidden = false;
+                        document.getElementById("pay-other").setAttribute("required","required");
+                        document.getElementById("o1").hidden = false;
+
+                    }
+                    else{
+                        document.getElementById("pay-other").hidden = true;
+                        document.getElementById("pay-other").removeAttribute("required");
+                        document.getElementById("o1").hidden = true;
+                    }
+                }
+                function getToDate(a){
+                    $.get("/get-to-date-for-invoice/{{id}}/"+a, function (data){
+                        if (data["check"] == "1"){
+                            document.getElementsByName('fdate')[0].value = data["from_date"];
+                            document.getElementsByName('tdate')[0].value = data["to_date"];
+                        }
+                    });
+                }
+            </script>
+        </head>
+        
+        <body>
+            <br><br>
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-head text-center">
+                                Recent Transactions
+                            </div>
+                            <div class="card-body">
+                                {% if prev_trans %}
+                                    {% for i,j in prev_trans %}
+                                        <p>{{i}}</p>
+                                        <p>{{j}}</p>
+                                        <hr/>
+                                    {% endfor %}
+                                {% else %}
+                                    <p>No previous transaction found</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-head text-center">
+                                <a href="{% url 'invoices' id %}"><-Back</a>&ensp;&ensp;&ensp; Add New Invoice
+                            </div>
+                            <div class="card-body">
+                                {% if message %}
+                                    <div class="alert alert-danger" role="alert">
+                                        {{message}}
+                                    </div>
+                                {% endif %}
+                                <form method="post">{% csrf_token %}
+                                    <input type="number" class="form-control" required name="amount" placeholder="Enter The Amount" onchange="getToDate(this.value);"><br>
+                                    <input type="number" class="form-control" name="ramount" placeholder="Enter The Remaining Amount"><br>
+                                    <select name="payment" class="form-control" required onchange="changeFormBasedOnOption(this.value)">
+                                        <option value="" disabled selected>Select Payment Option</option>
+                                        <option>Cash</option>
+                                        <option>Transfer</option>
+                                    </select><br>
+                                    <input type="text" class="form-control" name="bank" placeholder="Enter Name Of Bank" hidden id="bank"><br id="b1" hidden>
+                                    <label id="b2" hidden>Date Of Transfer</label><br id="b3" hidden><br>
+                                    <input type="date" class="form-control" name="trans_date" placeholder="Enter Date Of Transfer" hidden id="transDate"><br id="b4" hidden>
+                                    <select name="type" class="form-control" required onchange="changeFormBasedOnType(this.value)">
+                                        <option value="" disabled selected>Select Payment Type</option>
+                                        <option value="Electric Bill">Electric Bill</option>
+                                        <option value="Water Bill">Water Bill</option>
+                                        <option value="Other">Other</option>
+                                    </select><br>
+                                    <input type="text" class="form-control" name="type-other" placeholder="Payment Type" id="pay-other" hidden><br id="o1" hidden>
+                                    <label>From Date</label><br>
+                                    <input type="date" class="form-control" required name="fdate" placeholder="Enter From Date"><br>
+                                    <label>To Date</label><br>
+                                    <input type="date" class="form-control" required name="tdate" placeholder="Enter To Date"><br>
+                                    <label>Comments</label>
+                                    <textarea class="form-control" name="note"></textarea><br>
+                                    <button class="btn btn-primary text-center" type="submit">
+                                        Add
+                                    </button>
+                                </form>
+                            </div>
+                            <div class="card-footer">
+                                <div class="row justify-content-end">
+                                    {% if request.user.is_superuser %}
+                                        <div class="col-lg-2">
+                                            <a href="/admin">
+                                                Admin
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                    <div class="col-lg-2">
+                                        <a href="{% url 'logout' %}">
+                                            Logout
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </body>
+
+    
+    </html>

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+    <html lang="en">
+
+        <head>
+            <title>سجل الصيانة</title>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        </head>
+
+        <body>
+            <script>
+                function confirm_delete(a){
+                    temp = a.split("delete-maintenance-invoice/")[1];
+                    $.get('/check-delete-allowed/'+temp+'/m', function (data){
+                        if (data['check']){
+                            if (confirm("Are you sure you want to delete this?")){
+                                window.location.href = a;
+                            }
+                        }
+                        else{
+                            window.alert("Action is not allowed");
+                        }
+                    });
+                }
+            </script>
+            <br><br>
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-3">
+                        <div class="card">
+                            <div class="card-head text-center">
+                                Showing Invoice Owners : <select class="form-control" id="owners-invoice">
+                                    <option value="x">All</option>
+                                    {% for i in owners %}
+                                        <option value="{{i.id}}" {% if sel_owner == i.id %} selected {% endif %} >{{i.name}}</option>
+                                    {% endfor %}
+                                </select><br>
+                                <button class="btn btn-primary" onclick="redirectToMainInvoices();">
+                                    Show Maintenance Invoices
+                                </button><br>
+                                <script>
+                                    function redirectToMainInvoices(){
+                                        window.location.href = "/owner-maintenance-invoices/"+document.getElementById("owners-invoice").value;
+                                    }
+                                </script>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-9">
+                        <div class="card">
+                            <div class="card-head text-center">
+                                <a href="{% url 'home' %}"><-Back</a>
+
+                                <form method="post" id="sort-form">{% csrf_token %}</form>
+                                <div class="form-inline">
+                                    &ensp;&ensp;&ensp;<button class="btn btn-primary" form="sort-form" onclick="this.form.submit();">
+                                        Sort by Issued Date
+                                    </button>&nbsp; : &nbsp;
+                                    <select class="form-control" form="sort-form" name="asc_desc">
+                                        <option value="1" {% if order == '1' %}selected{% endif %} >Descending</option>
+                                        <option value="0" {% if order == '0' %}selected{% endif %} >Ascending</option>
+                                    </select>
+                                </div>
+
+                            </div>
+                            <div class="card-body">
+                                {% if objs %}
+                                    <script>
+                                        curr_page = 1;
+                                        total_pages = 1;
+                                        $(document).ready(function (){
+                                            no_rows = document.getElementsByClassName("invoice_rows").length;
+                                            if (no_rows > 20){
+                                                document.getElementById("pagination-div").style = "";
+                                                total_pages = Math.ceil(no_rows / 20);
+                                                for (i=21 ; i<=no_rows ; i++){
+                                                    temp = document.getElementById("row-"+i);
+                                                    temp.style = "display: none;";
+                                                }
+                                            }
+                                        });
+
+                                        function leftScroll(){
+                                            if (curr_page != 1){
+                                                no_rows = document.getElementsByClassName("invoice_rows").length;
+                                                for (i=1 ; i<=no_rows ; i++){
+                                                    temp = document.getElementById("row-"+i);
+                                                    temp.style = "display: none;";
+                                                }
+                                                for (i=20*(curr_page-2) + 1 ; i<=20*(curr_page-1) ; i++){
+                                                    try{
+                                                        temp = document.getElementById("row-"+i);
+                                                        temp.style = "";
+                                                    }
+                                                    catch(e){
+                                                        break;
+                                                    }
+                                                }
+                                                curr_page = curr_page - 1;
+
+                                                if (curr_page == total_pages){
+                                                    temp = document.getElementById("rightClick").style = "color:black;";
+                                                }
+                                                else{
+                                                    temp = document.getElementById("rightClick").style = "color:blue;";
+                                                }
+                                                if (curr_page == 1){
+                                                    temp = document.getElementById("leftClick").style = "color:black;";
+                                                }
+                                                else{
+                                                    temp = document.getElementById("leftClick").style = "color:blue;";
+                                                }
+
+                                                document.getElementById("page-count").innerText = "Page - "+curr_page;
+                                            }
+                                        }
+
+                                        function rightScroll(){
+                                            if (curr_page != total_pages){
+                                                no_rows = document.getElementsByClassName("invoice_rows").length;
+                                                for (i=1 ; i<=no_rows ; i++){
+                                                    temp = document.getElementById("row-"+i);
+                                                    temp.style = "display: none;";
+                                                }
+                                                for (i=20*(curr_page) + 1 ; i<=20*(curr_page+1) ; i++){
+                                                    try{
+                                                        temp = document.getElementById("row-"+i);
+                                                        temp.style = "";
+                                                    }
+                                                    catch(e){
+                                                        break;
+                                                    }
+                                                }
+                                                curr_page = curr_page + 1;
+
+                                                if (curr_page == total_pages){
+                                                    temp = document.getElementById("rightClick").style = "color:black;";
+                                                }
+                                                else{
+                                                    temp = document.getElementById("rightClick").style = "color:blue;";
+                                                }
+                                                if (curr_page == 1){
+                                                    temp = document.getElementById("leftClick").style = "color:black;";
+                                                }
+                                                else{
+                                                    temp = document.getElementById("leftClick").style = "color:blue;";
+                                                }
+
+                                                document.getElementById("page-count").innerText = "Page - "+curr_page;
+                                            }
+                                        }
+                                    </script>
+                                    <div class="row" id="pagination-div" style="display: none;">
+                                        <div class="col-sm-1">
+
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <span class="fa fa-arrow-left" onclick="leftScroll();" style="color: black;" id="leftClick"></span>
+                                        </div>
+                                        <div class="col-sm-8 text-center" id="page-count">
+                                            Page - 1
+                                        </div>
+                                        <div class="col-sm-1">
+                                            &ensp;<span class="fa fa-arrow-right" onclick="rightScroll();" style="color: blue;" id="rightClick"></span>
+                                        </div>
+                                        <div class="col-sm-1">
+
+                                        </div>
+                                    </div>
+                                    <table class="table">
+                                        <tr>
+                                            <td>التاريخ</td>
+                                            <td>المبلغ</td>
+                                            <td>عمارة</td>
+                                            <td>رقم الشقة</td>
+                                            <td>الوصف</td>
+                                            <td>كاتب السند</td>
+                                            <td>Actions</td>
+                                        </tr>
+                                        {% for i in objs %}
+                                            <tr id="row-{{forloop.counter}}" class="invoice_rows">
+                                                <td>{{i.today_date | date:'d-m-y'}}</td>
+                                                <td>{{i.amount}}</td>
+                                                <td>{{i.apartment.building.name}}</td>
+                                                <td>{{i.apartment.aprt_number}}</td>
+                                                <td>{{i.note}}</td>
+                                                <td>{{i.user.username}}</td>
+                                                <td>
+                                                    <a onclick="confirm_delete('{% url 'delete-maintenance-invoice' i.id %}')" title="Delete"><span class="fa text-danger fa-lg fa-remove"></span></a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </table>
+                                {% else %}
+                                    <a>الشقة لاتمتلك سجل صيانة</a>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer">
+                                <div class="row justify-content-around">
+                                    <div class="col-lg-8">
+                                    </div>
+                                    {% if request.user.is_superuser %}
+                                        <div class="col-lg-2">
+                                            <a href="/admin">
+                                                Admin
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                    <div class="col-lg-2">
+                                        <a href="{% url 'logout' %}">
+                                            تسجيل خروج
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </body>
+
+
+    </html>

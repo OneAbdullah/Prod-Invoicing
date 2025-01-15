@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+    <html lang="en">
+
+        <head>
+            <title>السندات</title>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        </head>
+             <style>
+    /* Page Background */
+    body {
+        background-color: #f7f7f7;
+        font-family: Arial, sans-serif;
+    }
+
+    /* Navbar Styling */
+    .navbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: #ffffff;
+        padding: 0.5rem 1rem;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+
+    .navbar-logo img {
+        width: 120px;
+    }
+
+    .navbar-search {
+        position: relative;
+        flex-grow: 1;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Input Field Styling */
+    .navbar-search input[type="text"] {
+        width: 100%;
+        padding: 0.5rem 2.5rem 0.5rem 0.5rem;
+        border-radius: 0.25rem;
+        border: 1px solid #ced4da;
+        transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        text-align: center;
+    }
+
+    .navbar-search input[type="text"]:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        outline: none;
+    }
+
+    .navbar-search button {
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: none;
+        background-color: transparent;
+        color: #007bff;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+
+    .navbar-search button:hover {
+        color: #0056b3;
+    }
+
+    .navbar-text {
+        font-weight: bold;
+        font-size: 1.1em;
+        white-space: nowrap;
+        margin-left: 1rem; /* Spacing between Task Dashboard and Arabic text */
+    }
+
+    .navbar-link {
+        font-size: 1.1em;
+        color: #007bff;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .navbar-link:hover {
+        text-decoration: underline;
+        color: #0056b3;
+    }
+</style>
+
+        <body>
+            <script>
+                function confirm_delete(a){
+                    temp = a.split("delete-invoice/")[1];
+                    $.get('/check-delete-allowed/'+temp+'/i', function (data){
+                        if (data['check']){
+                            if (confirm("Are you sure you want to delete this?")){
+                                window.location.href = a;
+                            }
+                        }
+                        else{
+                            window.alert("Action is not allowed");
+                        }
+                    });
+                }
+                function confirm_receive(a,b,c){
+                    if (confirm("Are you sure you want to receive : ["+b+"] from :["+c+"]?")){
+                        window.location.href = a;
+                    }
+                }
+                function handleSearch() {
+            const searchInput = document.getElementById('searchInput').value.trim();
+
+            if (!searchInput) {
+                alert("Please enter a search term.");
+                return false;
+            }
+
+            const firstChar = searchInput.charAt(0);
+
+            if (firstChar === '0' || firstChar === '5') {
+                document.getElementById('unified_search').action = "{% url 'search-apartment-by-phone' %}";
+            } else {
+                document.getElementById('unified_search').action = "{% url 'search-apartment-by-contract' %}";
+            }
+
+            return true;
+        }
+            </script>
+                        <nav class="navbar">
+        <!-- Logo -->
+        <a class="navbar-logo" href="#">
+            <img src="https://i.postimg.cc/8CRg0V9j/logo-1.png" alt="Logo">
+        </a>
+
+        <!-- Centered search feature -->
+        <div class="navbar-search">
+            <form method="post" id="unified_search" onsubmit="return handleSearch()" action="#">
+                {% csrf_token %}
+                <input type="text" placeholder="إبحث برقم الجوال أو رقم العقد" name="searchInput" class="form-control" id="searchInput" required>
+                <button type="submit">
+                    <i class="fa fa-search"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Task Dashboard link and Arabic text -->
+        <div style="display: flex; align-items: center;">
+            <a href="/task-dashboard/1" class="navbar-link">قائمة المهام</a>
+            <!-- Arabic text on the far right -->
+        <a href="{% url 'home' %}" class="navbar-text">
+            مكتب محمد عبدالله السماعيل للعقارات
+        </a>
+        </div>
+    </nav>
+
+    <br>
+            <br><br>
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-3">
+                        <div class="card">
+                            <div class="card-head text-center">
+                                تفاصيل الشقة
+                            </div>
+                            <div class="card-body">
+                                {% if message %}
+                                    <div class="alert alert-danger" role="alert">
+                                        {{message}}
+                                    </div>
+                                {% endif %}
+                                <form method="post" action="{% url 'edit-apartment-form' aobj.id %}">{% csrf_token %}
+                                    <input type="number" class="form-control" required name="num" placeholder="Enter The Apartment Number" value="{{aobj.aprt_number}}" {% if not type_of_user %}readonly{% endif %}><br>
+                                    <input type="text" class="form-control" required name="name" placeholder="Enter The Name Of Apartment" value="{{aobj.name}}" {% if not type_of_user %}readonly{% endif %}><br>
+                                    <input type="number" class="form-control" required name="phone" placeholder="Enter Phone Number" value="{{aobj.phone_nmber}}" {% if not type_of_user %}readonly{% endif %}><br>
+                                    <select class="form-control" required name="type_of" {% if not type_of_user %}readonly{% endif %}>
+                                        <option {% if aobj.type_of == 'Apartment' %}selected{% endif %} value="Apartment"> شقة</option>
+                                        <option {% if aobj.type_of == 'Home' %}selected{% endif %} value="Home"> غرفة</option>
+                                        <option {% if aobj.type_of == 'Floor' %}selected{% endif %} value="Floor"> دور</option>
+                                        <option {% if aobj.type_of == 'Store' %}selected{% endif %} value="Store"> محل</option>
+                                        <option {% if aobj.type_of == 'Studio' %}selected{% endif %} value="Studio"> ملحق</option>
+                                    </select><br>
+                                    <label>تاريخ إنتهاء العقد</label><br>
+                                    <input type="date" class="form-control" required name="dob" placeholder="Enter Date Of Birth" value="{{date_dis}}" {% if not type_of_user %}readonly{% endif %}><br>
+                                    <input type="number" class="form-control" required name="cnum" placeholder="رقم العقد" value="{{aobj.contract_number}}" {% if not type_of_user %}readonly{% endif %}><br>
+                                    <input type="number" class="form-control" required name="enum" placeholder="رقم حساب الكهرباء" value="{{aobj.elect_number}}" {% if not type_of_user %}readonly{% endif %}><br>
+                                    <input type="number" class="form-control" required name="rent" placeholder="Enter Annual Rent" value="{{aobj.annual_rent}}" {% if not type_of_user %}readonly{% endif %}><br>
+                                    <select class="form-control" required name="payment_method" {% if not type_of_user %}readonly{% endif %}>
+                                        <option value="1" {% if aobj.payment_method == '1' %}selected{% endif %}>شهريا</option>
+                                        <option value="2" {% if aobj.payment_method == '2' %}selected{% endif %}>كل ثالث شهور</option>
+                                        <option value="3" {% if aobj.payment_method == '3' %}selected{% endif %}>كل ست شهور</option>
+                                        <option value="4" {% if aobj.payment_method == '4' %}selected{% endif %}>سنوي</option>
+                                    </select><br>
+                                    <label>التعليقات</label>
+                                     <textarea class="form-control" required name="note" rows ="15"{% if not type_of_user %}readonly{% endif %}>{{aobj.note}} </textarea><br>
+                                    {% if type_of_user %}
+                                        <button class="btn btn-primary text-center" type="submit">
+                                            حفظ التغييرات
+                                        </button>
+                                    {% endif %}
+                                    <br><br>
+                                    <button class="btn btn-primary" onclick="window.location.href='/new-tenant-form/{{aobj.id}}/i'" type="button">
+                                        إضافة مستأجر جديد
+                                    </button>
+                                    <br><br>
+                                    <button class="btn btn-primary" onclick="window.location.href='/previous-tenants/{{aobj.id}}/i'" type="button">
+                                        سجل المستأجرين
+                                    </button>
+                                    <br><br>
+                                    <button class="btn btn-primary" onclick="window.location.href='/other-invoices/{{aobj.id}}'" type="button">
+                                        مدفوعات أخرى
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-9">
+                        <div class="card">
+                            <div class="card-head text-center">
+                  <a href="{% url 'apartments' aobj.building.id %}"><-Back</a>&ensp;&ensp;&ensp; عمارة - {{aobj.building.name}} &ensp; شقة - {{aobj.aprt_number}} {% if aobj.tenant %}&ensp;  {{aobj.tenant.name}}{% endif %}<br><br>
+
+                                <form method="post" id="sort-form">{% csrf_token %}</form>
+                                <div class="form-inline">
+                                    &ensp;&ensp;&ensp;<button class="btn btn-primary" form="sort-form" onclick="this.form.submit();">
+                                        Sort by Issued Date
+                                    </button>&nbsp; : &nbsp;
+                                    <select class="form-control" form="sort-form" name="asc_desc">
+                                        <option value="0" {% if order == '0' %}selected{% endif %} >Ascending</option>
+                                        <option value="1" {% if order == '1' %}selected{% endif %} >Descending</option>
+                                    </select>
+                                </div>
+
+                            </div>
+                            <div class="card-body">
+                                {% if objs %}
+                                    <script>
+                                        curr_page = 1;
+                                        total_pages = 1;
+                                        $(document).ready(function (){
+                                            no_rows = document.getElementsByClassName("invoice_rows").length;
+                                            if (no_rows > 20){
+                                                document.getElementById("pagination-div").style = "";
+                                                total_pages = Math.ceil(no_rows / 20);
+                                                for (i=21 ; i<=no_rows ; i++){
+                                                    temp = document.getElementById("row-"+i);
+                                                    temp.style = "display: none;";
+                                                }
+                                            }
+                                        });
+
+                                        function leftScroll(){
+                                            if (curr_page != 1){
+                                                no_rows = document.getElementsByClassName("invoice_rows").length;
+                                                for (i=1 ; i<=no_rows ; i++){
+                                                    temp = document.getElementById("row-"+i);
+                                                    temp.style = "display: none;";
+                                                }
+                                                for (i=20*(curr_page-2) + 1 ; i<=20*(curr_page-1) ; i++){
+                                                    try{
+                                                        temp = document.getElementById("row-"+i);
+                                                        temp.style = "";
+                                                    }
+                                                    catch(e){
+                                                        break;
+                                                    }
+                                                }
+                                                curr_page = curr_page - 1;
+
+                                                if (curr_page == total_pages){
+                                                    temp = document.getElementById("rightClick").style = "color:black;";
+                                                }
+                                                else{
+                                                    temp = document.getElementById("rightClick").style = "color:blue;";
+                                                }
+                                                if (curr_page == 1){
+                                                    temp = document.getElementById("leftClick").style = "color:black;";
+                                                }
+                                                else{
+                                                    temp = document.getElementById("leftClick").style = "color:blue;";
+                                                }
+
+                                                document.getElementById("page-count").innerText = "Page - "+curr_page;
+                                            }
+                                        }
+
+                                        function rightScroll(){
+                                            if (curr_page != total_pages){
+                                                no_rows = document.getElementsByClassName("invoice_rows").length;
+                                                for (i=1 ; i<=no_rows ; i++){
+                                                    temp = document.getElementById("row-"+i);
+                                                    temp.style = "display: none;";
+                                                }
+                                                for (i=20*(curr_page) + 1 ; i<=20*(curr_page+1) ; i++){
+                                                    try{
+                                                        temp = document.getElementById("row-"+i);
+                                                        temp.style = "";
+                                                    }
+                                                    catch(e){
+                                                        break;
+                                                    }
+                                                }
+                                                curr_page = curr_page + 1;
+
+                                                if (curr_page == total_pages){
+                                                    temp = document.getElementById("rightClick").style = "color:black;";
+                                                }
+                                                else{
+                                                    temp = document.getElementById("rightClick").style = "color:blue;";
+                                                }
+                                                if (curr_page == 1){
+                                                    temp = document.getElementById("leftClick").style = "color:black;";
+                                                }
+                                                else{
+                                                    temp = document.getElementById("leftClick").style = "color:blue;";
+                                                }
+
+                                                document.getElementById("page-count").innerText = "Page - "+curr_page;
+                                            }
+                                        }
+                                    </script>
+                                    <div class="row" id="pagination-div" style="display: none;">
+                                        <div class="col-sm-1">
+
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <span class="fa fa-arrow-left" onclick="leftScroll();" style="color: black;" id="leftClick"></span>
+                                        </div>
+                                        <div class="col-sm-8 text-center" id="page-count">
+                                            Page - 1
+                                        </div>
+                                        <div class="col-sm-1">
+                                            &ensp;<span class="fa fa-arrow-right" onclick="rightScroll();" style="color: blue;" id="rightClick"></span>
+                                        </div>
+                                        <div class="col-sm-1">
+
+                                        </div>
+                                    </div>
+                                    <table class="table">
+                                        <tr>
+                                            <td>الباقي</td>
+                                            <td>إلى</td>
+                                            <td>من الفترة</td>
+                                            <td>التاريخ</td>
+                                            <td>رقم السند</td>
+                                            <td>المبلغ</td>
+                                            <td>كاتب السند</td>
+                                            <td>المستلم</td>
+                                            <td>Actions</td>
+                                        </tr>
+                                        {% for i in objs %}
+                                            <tr id="row-{{forloop.counter}}" class="invoice_rows">
+                                                <td>{{i.remaining_amount}}</td>
+                                                <td>{{i.to_date | date:'d-m-y'}}</td>
+                                                <td>{{i.from_date | date:'d-m-y'}}</td>
+                                                <td>{{i.today_date | date:'d-m-y'}}</td>
+                                                <td>{{i.invoice_number}}</td>
+                                                <td>{{i.amount}}</td>
+                                                <td>{{i.user.username}}</td>
+                                                <td>{{i.received_by}}</td>
+                                                <td><a onclick="confirm_receive('{% url 'receive-invoice' i.id %}','{{i.amount}}','{{i.user.username}}')" title="Receive" href="#">Receive</a>
+                                                    <a href="{% url 'print-invoice' i.id %}" target="_blank">Print</a>&ensp;
+                                                    <a onclick="confirm_delete('{% url 'delete-invoice' i.id %}')" title="Delete"><span class="fa text-danger fa-lg fa-remove"></span></a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </table>
+                                {% else %}
+                                    <a>لايوجد سندات لهذه الشقة</a>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer">
+                                <div class="row justify-content-around">
+                                    <div class="col-lg-8">
+                                        {% if type_of_user or write_priv %}
+                                            <button class="btn btn-primary" type="button" onclick="window.location.href='/new-invoice-form/{{aobj.id}}'">
+                                                إضافة سند
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                    {% if request.user.is_superuser %}
+                                        <div class="col-lg-2">
+                                            <a href="/admin">
+                                                Admin
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                    <div class="col-lg-2">
+                                        <a href="{% url 'logout' %}">
+                                            تسجيل الخروج
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </body>
+
+
+    </html>
