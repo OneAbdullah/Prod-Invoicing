@@ -17,6 +17,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
@@ -40,7 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'app',
-    'tasks'
+    'tasks',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
@@ -154,7 +156,13 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")  # Directory for uploaded media fil
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# settings.py
+CORS_ALLOWED_ORIGINS = [
+    "https://alsmaileu.eu.pythonanywhere.com",
+    # "http://localhost:3000"   # if you need to allow local dev
+]
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 60 * 15
 SESSION_SAVE_EVERY_REQUEST = True
+#CORS_ORIGIN_ALLOW_ALL = True  # for testing

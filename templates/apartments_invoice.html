@@ -101,20 +101,21 @@
                     temp = a.split("delete-invoice/")[1];
                     $.get('/check-delete-allowed/'+temp+'/i', function (data){
                         if (data['check']){
-                            if (confirm("Are you sure you want to delete this?")){
+                            if (confirm("هل انت متأكد من حذف هذا السند؟")){
                                 window.location.href = a;
                             }
                         }
                         else{
-                            window.alert("Action is not allowed");
+                            window.alert("غير مصرح لك بحذف هذا السند");
                         }
                     });
                 }
-                function confirm_receive(a,b,c){
-                    if (confirm("Are you sure you want to receive : ["+b+"] from :["+c+"]?")){
-                        window.location.href = a;
-                    }
-                }
+function confirm_receive(url, amount, username) {
+    if (confirm(`هل انت متأكد من استلام مبلغ ${amount} من ${username}؟`)) {
+        window.location.href = url;
+    }
+}
+
                 function handleSearch() {
             const searchInput = document.getElementById('searchInput').value.trim();
 
@@ -352,7 +353,7 @@
                                             <td>المبلغ</td>
                                             <td>كاتب السند</td>
                                             <td>المستلم</td>
-                                            <td>Actions</td>
+                                            <td>الاجراءات</td>
                                         </tr>
                                         {% for i in objs %}
                                             <tr id="row-{{forloop.counter}}" class="invoice_rows">
@@ -364,8 +365,8 @@
                                                 <td>{{i.amount}}</td>
                                                 <td>{{i.user.username}}</td>
                                                 <td>{{i.received_by}}</td>
-                                                <td><a onclick="confirm_receive('{% url 'receive-invoice' i.id %}','{{i.amount}}','{{i.user.username}}')" title="Receive" href="#">Receive</a>
-                                                    <a href="{% url 'print-invoice' i.id %}" target="_blank">Print</a>&ensp;
+                                                <td><a onclick="confirm_receive('{% url 'receive-invoice' i.id %}','{{i.amount}}','{{i.user.username}}')" title="Receive" href="#">إستلام</a>
+                                                    <a href="{% url 'print-invoice' i.id %}" target="_blank">طباعة</a>&ensp;
                                                     <a onclick="confirm_delete('{% url 'delete-invoice' i.id %}')" title="Delete"><span class="fa text-danger fa-lg fa-remove"></span></a>
                                                 </td>
                                             </tr>

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <title>استبيان المباني - الإدارة</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <!-- jQuery & Bootstrap JS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://code.jquery.com/jquery-migrate-1.4.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+    <!-- Font Awesome & Flag Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/6.6.6/css/flag-icons.min.css">
+    <!-- DataTables -->
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css">
+
+    <style>
+        .dt-center {
+            text-align: center;
+        }
+        .dt-center-comments {
+            text-align: center;
+        }
+        .dataTables_wrapper {
+            width: 95%;
+            margin: 0 auto;
+        }
+        body, table, select, input {
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+
+<br>
+<center>
+    <a href="/" class="btn btn-light btn-sm mb-3">
+        <i class="fa fa-arrow-left"></i> رجوع
+    </a>
+    <h3>جميع الطلبات</h3>
+</center>
+
+
+
+<div class="table-responsive">
+    <table class="table table-striped table-bordered" id="tab1">
+        <thead>
+            <!-- Filter Row -->
+            <tr>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th>
+                    <select id="form-type-sel">
+                        <option value="" selected disabled>الكل</option>
+                    </select>
+                </th>
+                <th>
+                    <select id="property-type-sel">
+                        <option value="" selected disabled>الكل</option>
+                    </select>
+                </th>
+                <th></th>
+                <th>
+                    <select id="renting-sel">
+                        <option value="" selected disabled>الكل</option>
+                    </select>
+                </th>
+                <th></th>
+            </tr>
+            <!-- Actual Column Headers -->
+            <tr>
+                <th>التاريخ</th>
+                <th>الاسم</th>
+                <th>الهاتف</th>
+                <th>ماذا تريد؟</th>
+                <th>العقار</th>
+                <th>المنطقة المفضلة</th>
+                <th>سبب الاستئجار</th>
+                <th>التعليقات</th>
+            </tr>
+        </thead>
+        <!-- We'll fill <tbody> via JavaScript -->
+        <tbody id="tableBody"></tbody>
+    </table>
+</div>
+
+<script>
+/*
+  Use your actual endpoint and key here.
+*/
+const API_URL = 'https://alsmaileu.eu.pythonanywhere.com/api/v1/get-all-data/MY_SECRET_KEY';
+
+$(document).ready(function() {
+    fetch(API_URL)
+      .then(response => response.json())
+      .then(data => {
+          if (data.response !== "Success") {
+              alert("لم يتم العثور على مفتاح API صالح، أو غير مسموح.");
+              return;
+          }
+
+          // data.data is the array of submissions
+          const submissions = data.data;
+          const ALLOWED_PROPERTY_TYPES = [
+  "أرض",
+  "شقة",      // We'll treat “شقة” as a main category
+  "منزل",
+  "طابق",
+  "استوديو",
+  "محل"
+];
+const ALLOWED_APARTMENT_TYPES = [
+  "غرفة نوم واحدة + غرفة معيشة",
+  "غرفتان + غرفة معيشة",
+  "3 غرف نوم + غرفة معيشة"
+];
+
+
+
+          // Populate table rows
+          let tableRows = "";
+          for (let i = 0; i < submissions.length; i++) {
+              const row = submissions[i];
+              const dateVal    = row.date               || "";
+              const nameVal    = row.name               || "";
+              const phoneVal   = row.phone              || "";
+              const lookVal    = row['looking-for']     || "";
+              let   propVal    = row['property-type']   || "";
+              const aptVal     = row['apartment-type']  || "";
+              const distVal    = row['favorite-district'] || "";
+              const rentVal    = row['renting-reason']  || "";
+              const commVal    = row.comments           || "";
+
+              // If the property-type is "شقة" (Apartment), append apartment-type.
+              // This replicates server logic: "شقة - {{ i.getApartmentType }}"
+
+                  if (propVal === "شقة" && aptVal) {
+        // Check if aptVal is one of our allowed sub-types
+        if (ALLOWED_APARTMENT_TYPES.includes(aptVal.trim())) {
+            // e.g. "شقة - غرفة نوم واحدة + غرفة معيشة"
+            propVal = `شقة - ${aptVal.trim()}`;
+        } else {
+            // If it's not recognized, call it "شقة - اخرى"
+            propVal = "شقة - اخرى";
+        }
+    }
+        if (
+      !ALLOWED_PROPERTY_TYPES.includes(propVal) &&
+      !propVal.startsWith("شقة - ")
+    ) {
+        propVal = "اخرى";
+    }
+              tableRows += `
+                <tr>
+                    <td>${dateVal}</td>
+                    <td>${nameVal}</td>
+                    <td>${phoneVal}</td>
+                    <td class="formTypeOptions">${lookVal}</td>
+                    <td class="propertyTypeOptions">${propVal}</td>
+                    <td>${distVal}</td>
+                    <td class="puposeTypes">${rentVal}</td>
+                    <td>${commVal}</td>
+                </tr>
+              `;
+          }
+          document.getElementById('tableBody').innerHTML = tableRows;
+
+          // Initialize DataTable
+          const table = $('#tab1').DataTable({
+              columnDefs: [
+                  {
+                      targets: [0,1,2,3,4,5,6],
+                      className: 'dt-center'
+                  },
+                  {
+                      targets: [7],
+                      className: 'dt-center-comments'
+                  }
+              ],
+              autoWidth: true
+          });
+
+          // Build the filter dropdowns
+          buildFilters(table);
+      })
+      .catch(err => {
+          console.error("API fetch error:", err);
+          alert("حدث خطأ في جلب البيانات. تأكد من صحة الرابط ووجود مفتاح صحيح.");
+      });
+});
+
+function buildFilters(table) {
+    // Filter for "ماذا تريد؟" => .formTypeOptions
+    let options1 = '<option value="" selected>الكل</option>';
+    let opts1 = [];
+    const temp1 = document.getElementsByClassName("formTypeOptions");
+    for (let i = 0; i < temp1.length; i++) {
+        let val = temp1[i].innerText.trim();
+        if (val && opts1.indexOf(val) === -1) {
+            opts1.push(val);
+            options1 += `<option value="${val}">${val}</option>`;
+        }
+    }
+    document.getElementById("form-type-sel").innerHTML = options1;
+
+    // Filter for "العقار" => .propertyTypeOptions
+    let options2 = '<option value="" selected>الكل</option>';
+    let opts2 = [];
+    const temp2 = document.getElementsByClassName("propertyTypeOptions");
+    for (let i = 0; i < temp2.length; i++) {
+        let val = temp2[i].innerText.trim();
+        if (val && opts2.indexOf(val) === -1) {
+            opts2.push(val);
+            options2 += `<option value="${val}">${val}</option>`;
+        }
+    }
+    document.getElementById("property-type-sel").innerHTML = options2;
+
+    // Filter for "سبب الاستئجار" => .puposeTypes
+    let options3 = '<option value="" selected>الكل</option>';
+    let opts3 = [];
+    const temp3 = document.getElementsByClassName("puposeTypes");
+    for (let i = 0; i < temp3.length; i++) {
+        let val = temp3[i].innerText.trim();
+        if (val && opts3.indexOf(val) === -1) {
+            opts3.push(val);
+            options3 += `<option value="${val}">${val}</option>`;
+        }
+    }
+    document.getElementById("renting-sel").innerHTML = options3;
+
+    // Wire up the dropdown filters
+    $('#form-type-sel').on('change', function () {
+        table.column(3).search(this.value).draw();
+    });
+    $('#property-type-sel').on('change', function () {
+        table.column(4).search(this.value).draw();
+    });
+    $('#renting-sel').on('change', function () {
+        table.column(6).search(this.value).draw();
+    });
+}
+</script>
+
+</body>
+</html>

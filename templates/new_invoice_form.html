@@ -32,14 +32,18 @@
                         document.getElementById("b4").hidden = true;
                     }
                 }
-                function getToDate(a){
-                    $.get("/get-to-date-for-invoice/{{id}}/"+a, function (data){
-                        if (data["check"] == "1"){
-                            document.getElementsByName('fdate')[0].value = data["from_date"];
-                            document.getElementsByName('tdate')[0].value = data["to_date"];
-                        }
-                    });
-                }
+function getToDate(a) {
+    $.get("/get-to-date-for-invoice/{{id}}/" + a, function (data) {
+        if (data["check"] == "1") {
+            let fromDate = new Date(data["from_date"]); // Convert string to date
+            fromDate.setDate(fromDate.getDate() + 1);  // Add one more day
+
+            document.getElementsByName('fdate')[0].value = fromDate.toISOString().split('T')[0]; // Set new From Date
+            document.getElementsByName('tdate')[0].value = data["to_date"]; // Keep To Date as received
+        }
+    });
+}
+
             </script>
         </head>
 

@@ -121,31 +121,31 @@
             return true;
         }
             </script>
-        <nav class="navbar">
-        <!-- Logo -->
-        <a class="navbar-logo" href="#">
-            <img src="https://i.postimg.cc/8CRg0V9j/logo-1.png" alt="Logo">
-        </a>
+<nav class="navbar">
+    <!-- Logo -->
+    <a class="navbar-logo" href="#">
+        <img src="https://i.postimg.cc/8CRg0V9j/logo-1.png" alt="Logo">
+    </a>
 
-        <!-- Centered search feature -->
-        <div class="navbar-search">
-            <form method="post" id="unified_search" onsubmit="return handleSearch()" action="#">
-                {% csrf_token %}
-                <input type="text" placeholder="إبحث برقم الجوال أو رقم العقد" name="searchInput" class="form-control" id="searchInput" required>
-                <button type="submit">
-                    <i class="fa fa-search"></i>
-                </button>
-            </form>
-        </div>
+    <!-- Centered search feature -->
+    <div class="navbar-search">
+        <form method="post" id="unified_search" onsubmit="return handleSearch()" action="#">
+            {% csrf_token %}
+            <input type="text" placeholder="إبحث برقم الجوال أو رقم العقد" name="searchInput" class="form-control" id="searchInput" required>
+            <button type="submit">
+                <i class="fa fa-search"></i>
+            </button>
+        </form>
+    </div>
 
-        <!-- Task Dashboard link and Arabic text -->
-        <div style="display: flex; align-items: center;">
-            <a href="/task-dashboard/1" class="navbar-link">قائمة المهام</a>
-            <span class="navbar-text">
-                مكتب محمد عبدالله السماعيل للعقارات
-            </span>
-        </div>
-    </nav>
+    <!-- Links: Task Dashboard, Requests Page, and Arabic Text -->
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <a href="/task-dashboard/1" class="navbar-link">قائمة المهام</a>
+        <a href="{% url 'requests_page' %}" class="navbar-link">الطلبات</a>
+        <span class="navbar-text">مكتب محمد عبدالله السماعيل للعقارات</span>
+    </div>
+</nav>
+
 
     <br>
 

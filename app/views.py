@@ -14,8 +14,11 @@ from bidi.algorithm import get_display
 import openpyxl
 import datetime
 from datetime import timedelta
+from .models import invoice # or Invoice, matching whichever name you pick
+from .models import invoice_owner
 
-""" 
+
+"""
 objs = building.objects.all()
 for i in objs:
     aobjs = apartment.objects.filter(building=i,new_tenant_added=False)
@@ -24,7 +27,7 @@ for i in objs:
     for j in aobjs:
         j.display_order = disp
         j.save()
-        disp += 1       
+        disp += 1
 
 
 objs = apartment.objects.all()
@@ -71,7 +74,7 @@ def home(request):
     template = "home.html"
     context = {}
     obj = get_user_profile(request.user)
-    
+
     context['type_of_user'] = obj.type_of_user == 'd'
     if obj.type_of_user in ('v','w'):
         temp = building.objects.all()
@@ -96,7 +99,7 @@ def delete_building(request,id):
     obj = building.objects.get(pk=id)
     obj.delete()
     return redirect("/home")
-    
+
 @login_required(login_url='/')
 def building_form(request):
     template = "new_building_form.html"
@@ -205,7 +208,7 @@ def apartment_form(request,id,prev_id):
                         aobj.aprt_link = tempobj
                         aobj.save()
                         linkobj = aobj.aprt_link
-                        
+
                 linkobj.apartments.add(obj)
                 linkobj.save()
                 obj.aprt_link = linkobj
@@ -269,7 +272,7 @@ def invoices(request,id):
         template = "apartments_invoice.html"
         context = {}
         obj = get_user_profile(request.user)
-        
+
         context['type_of_user'] = obj.type_of_user == 'd'
         context['write_priv'] = obj.type_of_user == 'w'
         aobj = apartment.objects.get(pk=id)
@@ -287,14 +290,14 @@ def invoices(request,id):
         return render(request,template,context)
     else:
         return redirect('/home')
-    
+
 @login_required(login_url='/')
 def other_invoices(request,id):
     if id:
         template = "apartments_other_invoice.html"
         context = {}
         obj = get_user_profile(request.user)
-        
+
         context['type_of_user'] = obj.type_of_user == 'd'
         context['write_priv'] = obj.type_of_user == 'w'
         aobj = apartment.objects.get(pk=id)
@@ -358,7 +361,7 @@ def invoice_form(request,id):
         return render(request,template,context)
     else:
         return redirect("/home")
-    
+
 @login_required(login_url='/')
 def other_invoice_form(request,id):
     if id:
@@ -419,7 +422,7 @@ def get_reversed(a):
 
 @login_required(login_url='/')
 def print_invoice(request,id):
-    aprt_types = {"Apartment":"شقة","Floor":"دور","Home":"غرفة","Store":"محل ","Studio":"ملحق"}
+    aprt_types = {"Apartment":"شقة","Floor":"دور","Home":"أرض","Store":"محل ","Studio":"ملحق"}
     invoice_name = "Invoice.pdf"
 
     pdfmetrics.registerFont(TTFont("Arabic","font.ttf"))
@@ -434,7 +437,7 @@ def print_invoice(request,id):
     offset = 402
     remain_offset = -17
     x_remain_offset = 0
-    
+
     if (len(obj) == 1):
 
         if (obj[0].payment_method == "Cash"):
@@ -445,7 +448,7 @@ def print_invoice(request,id):
                 offset = offset + 25
                 p.drawString(270, 410+remain_offset, "{}".format(obj[0].remaining_amount))
                 p.drawString(270, 410-offset+remain_offset, "{}".format(obj[0].remaining_amount))
-            
+
             p.drawString(340, 523+remain_offset, "{}".format(obj[0].from_date.year))
             p.drawString(374, 523+remain_offset, "{}".format(obj[0].from_date.month))
             p.drawString(392, 523+remain_offset, "{}".format(obj[0].from_date.day))
@@ -484,7 +487,7 @@ def print_invoice(request,id):
             x_remain_offset = 0
             if (obj[0].remaining_amount > 0):
                 invoice_name = "Transfer_Remain2.pdf"
-                
+
                 p.drawString(270, 410+remain_offset, "{}".format(obj[0].remaining_amount))
                 #p.drawString(270, 410-offset+remain_offset, "{}".format(obj[0].remaining_amount))
 
@@ -602,7 +605,7 @@ def delete_invoice(request,id):
         obj.is_deleted = True
         obj.save()
         return redirect('/home')
-    
+
 @login_required(login_url='/')
 def actual_delete_invoice(request,id):
     obj = invoice.objects.get(pk=id)
@@ -614,70 +617,154 @@ def actual_delete_invoice(request,id):
         obj.delete()
         return redirect('/home')
 
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.contrib.auth.models import User
+from datetime import datetime
+from .models import invoice, invoice_owner
+
+
+
 @login_required(login_url='/')
-def owner_invoices(request,id):
-    if id:
-        template = "owners_invoice.html"
-        context = {}
-        obj = get_user_profile(request.user)
-        
-        context['type_of_user'] = obj.type_of_user == 'd'
-        if id != "x":
-            context['sel_owner'] = int(id)
-        if request.method == "POST" and request.POST['asc_desc'] in ("0","1"):
+def owner_invoices(request, id):
+    """
+    A single view that:
+      - Takes 'id' from the URL ("x" or an integer).
+      - Builds a base queryset of invoices, respecting user ownership restrictions.
+      - Uses advanced GET-based filters if present. Otherwise, uses your old POST-based sort.
+      - Paginates the results.
+      - Preserves filters in pagination links.
+    """
+    # 1) If no ID is provided, redirect to home
+    if not id:
+        return redirect('/home')
+
+    template = "owners_invoice.html"
+    context = {}
+    obj = get_user_profile(request.user)
+    context['type_of_user'] = (obj.type_of_user == 'd')
+
+    # 2) Keep track of which owner is selected in the URL
+    if id != "x":
+        context['sel_owner'] = int(id)
+
+    # ---------------------------------------------
+    # 3) Build the BASE invoice queryset
+    # ---------------------------------------------
+    if id != "x":
+        base_qs = invoice.objects.filter(is_deleted=False, owner__id=int(id))
+    else:
+        # If "x" => All owners, but if user is 'v' or 'w', only show allowed owners
+        base_qs = invoice.objects.filter(is_deleted=False)
+        if obj.type_of_user in ('v', 'w'):
+            allowed_ids = obj.invoice_owner_allowed.all().values_list('id', flat=True)
+            base_qs = base_qs.filter(owner__id__in=allowed_ids)
+
+    # ---------------------------------------------
+    # 4) Read GET filter parameters
+    # ---------------------------------------------
+    invoice_number  = request.GET.get('invoice_number', '').strip()
+    owner_id_filter = request.GET.get('owner_id', '').strip()  # from advanced filter form
+    user_id_filter  = request.GET.get('user_id', '').strip()
+    date_from       = request.GET.get('date_from', '').strip()
+    date_to         = request.GET.get('date_to', '').strip()
+    order_param     = request.GET.get('asc_desc', '')  # 'asc' or 'desc' from the filter
+
+    # So the template can keep them:
+    context['current_invoice_number'] = invoice_number
+    context['current_owner'] = owner_id_filter
+    context['current_user']  = user_id_filter
+    context['current_date_from'] = date_from
+    context['current_date_to']   = date_to
+    context['order'] = order_param if order_param else 'desc'  # default to 'desc'
+
+    # If user supplied ANY advanced filters, we do DB-based filtering
+    has_filter = any([invoice_number, owner_id_filter, user_id_filter, date_from, date_to, order_param])
+
+    # ---------------------------------------------
+    # 5) Combine advanced GET filters if present
+    # ---------------------------------------------
+    qs = base_qs  # We'll apply extra filters to this
+    if has_filter:
+        # (A) Invoice Number
+        if invoice_number:
+            try:
+                inv_num = int(invoice_number)
+                qs = qs.filter(invoice_number=inv_num)
+            except ValueError:
+                qs = qs.none()  # If user typed non-integer => no results
+
+        # (B) Owner from the Filter Form
+        if owner_id_filter and owner_id_filter != 'x':
+            try:
+                filter_owner_id = int(owner_id_filter)
+                qs = qs.filter(owner__id=filter_owner_id)
+            except ValueError:
+                qs = qs.none()
+
+        # (C) Written By User
+        if user_id_filter and user_id_filter != 'x':
+            try:
+                user_id_int = int(user_id_filter)
+                qs = qs.filter(user__id=user_id_int)
+            except ValueError:
+                qs = qs.none()
+
+        # (D) Date range
+        # We assume "today_date" is a DateField
+        if date_from and date_to:
+            qs = qs.filter(today_date__range=[date_from, date_to])
+        elif date_from:
+            qs = qs.filter(today_date__gte=date_from)
+        elif date_to:
+            qs = qs.filter(today_date__lte=date_to)
+
+        # (E) Sort by date if 'asc_desc' was provided
+        if order_param == 'asc':
+            qs = qs.order_by('today_date')
+        else:
+            qs = qs.order_by('-today_date')
+
+    else:
+        # ---------------------------------------------
+        # 6) No GET filters => use your OLD POST-based sorting
+        # ---------------------------------------------
+        if request.method == "POST" and request.POST.get('asc_desc') in ("0", "1"):
             context["order"] = request.POST['asc_desc']
             if request.POST["asc_desc"] == "0":
-                if id != "x":
-                    objs = invoice.objects.filter(is_deleted=False,owner__id=int(id)).order_by("today_date")
-                else:
-                    if obj.type_of_user in ('v','w'):
-                        temp2 = invoice.objects.filter(is_deleted=False).order_by("today_date")
-                        objs = []
-                        for i in temp2:
-                            if i.owner in obj.invoice_owner_allowed.all():
-                                objs.append(i)
-                    else:
-                        objs = invoice.objects.filter(is_deleted=False).order_by("today_date")
+                qs = qs.order_by('today_date')  # ascending
             else:
-                if id != "x":
-                    objs = invoice.objects.filter(is_deleted=False,owner__id=int(id)).order_by("-today_date")
-                else:
-                    if obj.type_of_user in ('v','w'):
-                        temp2 = invoice.objects.filter(is_deleted=False).order_by("-today_date")
-                        objs = []
-                        for i in temp2:
-                            if i.owner in obj.invoice_owner_allowed.all():
-                                objs.append(i)
-                    else:
-                        objs = invoice.objects.filter(is_deleted=False).order_by("-today_date")
+                qs = qs.order_by('-today_date') # descending
         else:
-            if id != "x":
-                objs = invoice.objects.filter(is_deleted=False,owner__id=int(id))
-            else:
-                if obj.type_of_user in ('v','w'):
-                    temp2 = invoice.objects.filter(is_deleted=False)
-                    objs = []
-                    for i in temp2:
-                        if i.owner in obj.invoice_owner_allowed.all():
-                            objs.append(i)
-                else:
-                    objs = invoice.objects.filter(is_deleted=False)
+            # No sort => just keep the base queryset in default order
+            # If you want default descending, do .order_by('-today_date')
+            pass
 
-        context['objs'] = objs
-        if obj.type_of_user in ('v','w'):
-            temp2 = invoice_owner.objects.all()
-            temp2_list = []
-            for i in temp2:
-                if i in obj.invoice_owner_allowed.all():
-                    temp2_list.append(i)
-            context['owners'] = temp2_list
-        else:
-            context['owners'] = invoice_owner.objects.all()
-        return render(request,template,context)
+    # ---------------------------------------------
+    # 7) Paginate the final qs
+    # ---------------------------------------------
+    paginator = Paginator(qs, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    context['page_obj'] = page_obj
+
+    # ---------------------------------------------
+    # 8) Provide owners & users for the filter form
+    # ---------------------------------------------
+    # If user is restricted (v/w), only show allowed owners
+    if obj.type_of_user in ('v','w'):
+        allowed_owners = obj.invoice_owner_allowed.all()
+        all_owners = invoice_owner.objects.all()
+        context['owners'] = [o for o in all_owners if o in allowed_owners]
     else:
-        return redirect('/home')
-    
+        context['owners'] = invoice_owner.objects.all()
 
+    context['users'] = User.objects.all()
+
+    # Render
+    return render(request, template, context)
 
 
 @login_required(login_url='/')
@@ -686,7 +773,7 @@ def maintenance_invoices(request,id):
         template = "apartments_maintenance_invoice.html"
         context = {}
         obj = get_user_profile(request.user)
-        
+
         context['type_of_user'] = obj.type_of_user == 'd'
         context['write_priv'] = obj.type_of_user == 'w'
         aobj = apartment.objects.get(pk=id)
@@ -740,7 +827,7 @@ def maintenance_invoice_form(request,id):
         return render(request,template,context)
     else:
         return redirect("/home")
-    
+
 @login_required(login_url='/')
 def delete_maintenance_invoice(request,id):
     obj = maintenance_invoice.objects.get(pk=id)
@@ -753,7 +840,7 @@ def delete_maintenance_invoice(request,id):
         obj.is_deleted = True
         obj.save()
         return redirect('/home')
-    
+
 @login_required(login_url='/')
 def actual_delete_maintenance_invoice(request,id):
     obj = maintenance_invoice.objects.get(pk=id)
@@ -771,7 +858,7 @@ def owner_maintenance_invoices(request,id):
         template = "owners_maintenance_invoice.html"
         context = {}
         obj = get_user_profile(request.user)
-        
+
         context['type_of_user'] = obj.type_of_user == 'd'
         if id != "x":
             context['sel_owner'] = int(id)
@@ -837,7 +924,7 @@ def owner_report(request,id):
     worksheet = workbook.get_sheet_by_name(workbook.get_sheet_names()[0])
 
     from_date = request.POST['from-date'].split("-")
-    from_date = datetime.date(year=int(from_date[0]),month=int(from_date[1]),day=int(from_date[2])) 
+    from_date = datetime.date(year=int(from_date[0]),month=int(from_date[1]),day=int(from_date[2]))
     to_date = request.POST['to-date'].split("-")
     to_date = datetime.date(year=int(to_date[0]),month=int(to_date[1]),day=int(to_date[2]))
 
@@ -852,7 +939,7 @@ def owner_report(request,id):
             for c in range(limits['col_start'],limits['col_end']+1):
                 cell = worksheet.cell(row=r,column=c)
                 cell.value = ""
-        
+
         inv_data = []
         for j in invoice_objs:
             if j.today_date.day == i:
@@ -891,7 +978,7 @@ def owner_report(request,id):
             cell = worksheet.cell(row=r,column=limits['col_start']+1)
             cell.value = j.note
 
-        
+
         if (i % 2 == 0):
             offset += row_offset
 
@@ -914,7 +1001,7 @@ def check_download_allowed(request,id):
             return JsonResponse({'check':False})
     else:
         return JsonResponse({'check':True})
-    
+
 @login_required(login_url='/')
 def check_delete_allowed(request,id,type_of):
     user_perms = user_profile.objects.filter(user=request.user)
@@ -934,19 +1021,19 @@ def check_delete_allowed(request,id,type_of):
             return JsonResponse({'check':False})
     else:
         return JsonResponse({'check':True})
-    
+
 @login_required(login_url='/')
 def receive_invoice(request,id):
     obj = invoice.objects.get(pk=id)
     obj.received_by = request.user.username
     obj.save()
     return redirect('/invoices/{}'.format(obj.apartment.id))
-    
+
 @login_required(login_url='/')
 def deleted_invoices(request):
     template = "deleted_invoices.html"
     context = {}
-    
+
     if request.method == "POST" and request.POST['asc_desc'] in ("0","1"):
         context["order"] = request.POST['asc_desc']
         if request.POST["asc_desc"] == "0":
@@ -982,7 +1069,7 @@ def new_tenant_form(request,id,sel):
         return redirect("/new-apartment-form/{}/{}".format(aobj.building.id,aobj.id))
     else:
         return redirect("/home")
-    
+
 @login_required(login_url='/')
 def previous_tenants(request,id,sel):
     if id:
@@ -997,7 +1084,7 @@ def previous_tenants(request,id,sel):
         return render(request,template,context)
     else:
         return redirect("/home")
-    
+
 @login_required(login_url='/')
 def tenant_invoices(request,aid,id):
     if id:
@@ -1018,7 +1105,7 @@ def tenant_invoices(request,aid,id):
         return render(request,template,context)
     else:
         return redirect('/home')
-    
+
 @login_required(login_url='/')
 def tenant_maintenance_invoices(request,aid,id):
     if id:
@@ -1039,7 +1126,7 @@ def tenant_maintenance_invoices(request,aid,id):
         return render(request,template,context)
     else:
         return redirect('/home')
-    
+
 def move_up_apartment(request,bid,aid):
     aobjs = apartment.objects.filter(building__id=bid,new_tenant_added=False).order_by("display_order")
     if aobjs[0].id != aid:
@@ -1107,32 +1194,59 @@ def search_apartment_by_contract(request):
     context['objs'] = apartment.objects.filter(temp_del=False, new_tenant_added=False, contract_number=search_input)
 
     return render(request, template, context)
-def get_to_date_for_invoice(request,id,amt):
-    retval = {"check":"0","from_date":"","to_date":""}
 
-    objs = reversed(list(invoice.objects.filter(is_deleted=False,apartment=apartment.objects.get(pk=id))))
+from datetime import datetime, timedelta  # Import correctly
+
+def get_to_date_for_invoice(request, id, amt):
+    retval = {"check": "0", "from_date": "", "to_date": ""}
+
+    objs = reversed(list(invoice.objects.filter(is_deleted=False, apartment=apartment.objects.get(pk=id))))
     for i in objs:
-        temp_from_date = datetime.date(year=int(i.to_date.year),month=int(i.to_date.month),day=int(i.to_date.day))
-        temp_from_date = temp_from_date.strftime("%Y-%m-%d")
+        if i.to_date is None:
+            continue  # Skip if to_date is missing
+
+        temp_from_date = i.to_date.strftime("%Y-%m-%d")
         temp_to_date = calculate_to_date(int(i.apartment.annual_rent), amt, temp_from_date)
+
         retval['check'] = "1"
         retval['from_date'] = temp_from_date
         retval['to_date'] = temp_to_date
-        break
+        break  # Stop after finding the first valid invoice
 
     return JsonResponse(retval)
 
 def calculate_to_date(annual_rent, amount, from_date_str):
-    # Convert the from_date string to a datetime object
-    from_date = datetime.datetime.strptime(from_date_str, "%Y-%m-%d")
-    
-    # Calculate the daily rent
+    from_date = datetime.strptime(from_date_str, "%Y-%m-%d")  # Convert string to date
+
+    # Add one more day to the from_date
+    from_date = from_date + timedelta(days=1)
+
+    # Avoid division by zero
+    if annual_rent == 0:
+        return from_date.strftime("%Y-%m-%d")
+
     daily_rent = annual_rent / 365
-    
-    # Calculate the number of days the amount covers
     days_covered = amount / daily_rent
-    
-    # Calculate the to_date by adding the days_covered to the from_date
     to_date = from_date + timedelta(days=int(days_covered))
-    
+
     return to_date.strftime("%Y-%m-%d")
+
+
+
+@login_required(login_url='/')
+def requests_view(request):
+    return render(request, 'requests.html')
+
+
+
+
+
+
+
+
+
+
+
+
+
+

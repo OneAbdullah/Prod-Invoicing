@@ -20,6 +20,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from tasks import views as taskViews
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
 
@@ -44,7 +45,7 @@ urlpatterns = [
     path("delete-invoice/<int:id>",views.delete_invoice,name="delete-invoice"),
     path("actual-delete-invoice/<int:id>",views.actual_delete_invoice,name="actual-delete-invoice"),
 
-    path("owner-invoices/<str:id>",views.owner_invoices,name="owner-invoices"),
+    #path("owner-invoices/<str:id>",views.owner_invoices,name="owner-invoices"),
 
     path("maintenance-invoices/<int:id>",views.maintenance_invoices,name="maintenance-invoices"),
     path("new-maintenance-invoice-form/<int:id>",views.maintenance_invoice_form,name="maintenance-invoice-form"),
@@ -78,6 +79,10 @@ urlpatterns = [
     path("create-task",taskViews.create_task,name="create-task"),
     path("task-detail/<int:id>/<int:show>",taskViews.task_detail,name="task-detail"),
     path("task-close/<int:id>/<int:show>",taskViews.task_close,name="task-close"),
+    path('requests/', views.requests_view, name='requests_page'),
+    path('owner-invoices/<str:id>/', views.owner_invoices, name='owner-invoices'),
+    #path('owner-invoices/<str:id>/', views.owner_invoices, name='owner-invoices')
+
 ]
 
 if settings.DEBUG:
