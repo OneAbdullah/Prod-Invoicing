@@ -740,7 +740,7 @@ def owner_invoices(request, id):
         else:
             # No sort => just keep the base queryset in default order
             # If you want default descending, do .order_by('-today_date')
-            pass
+            qs = qs.order_by('-today_date')
 
     # ---------------------------------------------
     # 7) Paginate the final qs
