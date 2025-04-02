@@ -13,10 +13,12 @@ from reportlab.pdfbase.ttfonts import TTFont
 from bidi.algorithm import get_display
 import openpyxl
 import datetime
-from datetime import timedelta
+#from datetime import timedelta
 from .models import invoice # or Invoice, matching whichever name you pick
 from .models import invoice_owner
+import logging
 
+logger = logging.getLogger(__name__)  # Add this at the top of your file
 
 """
 objs = building.objects.all()
@@ -622,7 +624,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.contrib.auth.models import User
-from datetime import datetime
+#from datetime import datetime
 from .models import invoice, invoice_owner
 
 
@@ -914,7 +916,6 @@ def owner_maintenance_invoices(request,id):
         return render(request,template,context)
     else:
         return redirect('/home')
-
 def owner_report(request,id):
     date_col_rows = [{'row_start':4,'row_end':29,'col_start':10,'col_end':16},{'row_start':4,'row_end':29,'col_start':2,'col_end':8}]
     date_col_rows_inv = [{'row_start':4,'row_end':29,'col_start':10,'col_end':14},{'row_start':4,'row_end':29,'col_start':2,'col_end':6}]
@@ -1195,41 +1196,48 @@ def search_apartment_by_contract(request):
 
     return render(request, template, context)
 
-from datetime import datetime, timedelta  # Import correctly
+#from datetime import datetime, timedelta  # Import correctly
 
 def get_to_date_for_invoice(request, id, amt):
     retval = {"check": "0", "from_date": "", "to_date": ""}
 
-    objs = reversed(list(invoice.objects.filter(is_deleted=False, apartment=apartment.objects.get(pk=id))))
-    for i in objs:
-        if i.to_date is None:
-            continue  # Skip if to_date is missing
+    try:
+        apt = apartment.objects.get(pk=id)
+    except apartment.DoesNotExist:
+        logger.error(f"Apartment with id {id} does not exist.")
+        return JsonResponse(retval)
 
-        temp_from_date = i.to_date.strftime("%Y-%m-%d")
-        temp_to_date = calculate_to_date(int(i.apartment.annual_rent), amt, temp_from_date)
+    try:
+        invoices = invoice.objects.filter(is_deleted=False, apartment=apt).order_by('-id')
+        for inv in invoices:
+            if inv.to_date is None:
+                continue
 
-        retval['check'] = "1"
-        retval['from_date'] = temp_from_date
-        retval['to_date'] = temp_to_date
-        break  # Stop after finding the first valid invoice
+            temp_from_date = inv.to_date.strftime("%Y-%m-%d")
+            temp_to_date = calculate_to_date(int(inv.apartment.annual_rent), int(amt), temp_from_date)
+
+            retval['check'] = "1"
+            retval['from_date'] = temp_from_date
+            retval['to_date'] = temp_to_date
+            break
+    except Exception as e:
+        logger.error(f"Error while processing invoices for apartment {id}: {str(e)}")
 
     return JsonResponse(retval)
 
 def calculate_to_date(annual_rent, amount, from_date_str):
-    from_date = datetime.strptime(from_date_str, "%Y-%m-%d")  # Convert string to date
+    from_date = datetime.datetime.strptime(from_date_str, "%Y-%m-%d")
+    from_date += datetime.timedelta(days=1)
 
-    # Add one more day to the from_date
-    from_date = from_date + timedelta(days=1)
-
-    # Avoid division by zero
     if annual_rent == 0:
         return from_date.strftime("%Y-%m-%d")
 
     daily_rent = annual_rent / 365
     days_covered = amount / daily_rent
-    to_date = from_date + timedelta(days=int(days_covered))
+    to_date = from_date + datetime.timedelta(days=int(days_covered))
 
     return to_date.strftime("%Y-%m-%d")
+
 
 
 
